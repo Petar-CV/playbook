@@ -85,9 +85,14 @@ name: diagnosing-superpowers
 description: Use when a superpowers session went wrong and the user wants
   to know why — repeated work, ignored plans, stumbles, poor results, a
   skill that didn't fire — or wants to build a bug report for the
-  superpowers maintainers. Works on the current session or a past one by
-  id or path, on any harness.
+  superpowers maintainers, for the current session or a past one
+  identified by id or path, on any harness.
 ```
+
+Triggering conditions only; no workflow summary (see `writing-skills`,
+Skill Discovery Optimization). SKILL.md stays under roughly 500 words:
+workflow, hard rules, Red Flags, and pointers. Everything else lives in
+the prompt, reference, and template files.
 
 ## Workflow
 
@@ -236,8 +241,9 @@ report.
 3. **Scrub** by subagent, per file: emails; names of people, replaced with
    role placeholders; account and organization UUIDs; anything that looks
    like an API key, token, or password; hostnames and IPs; absolute paths
-   under home rewritten to `~`; repository names and URLs unless the user
-   says the repository is public; anything the user names as proprietary.
+   under home rewritten to `~`; repository names and URLs (if the user has
+   said the repository is public, these are kept); anything the user names
+   as proprietary.
    Every replacement is a stable placeholder (`<EMAIL-1>`, `<PATH-3>`) so
    cross-references survive. The scrub log lists placeholder → category,
    never the original value.
@@ -293,6 +299,11 @@ or remote stores.
   seen the scrub log and file list.
 
 ## Red Flags (SKILL.md table)
+
+These rows are hypotheses from design. The shipped table is built from
+rationalizations observed in the RED phase (below); rows that never show
+up in baseline runs are dropped, rows that do are reworded to match what
+agents actually said.
 
 | Thought | Reality |
 |---------|---------|
@@ -359,24 +370,78 @@ confidence; if nothing is found, ask the user. Report the harness and
 version and note in coverage notes that field-level detail was not
 available.
 
+## Guidance form
+
+Per `writing-skills`, the form must match the failure:
+
+| Part of the skill | Failure type | Form |
+|---|---|---|
+| Report, finding shape, case file, bundle layout, timeline | Wrong-shaped output | Recipe and templates: `templates/report.md`, `templates/case.md`, `templates/bundle-README.md`, the finding shape in every analyst prompt |
+| Environment facts, sessions examined, coverage notes | Omitted element | REQUIRED slots in the report template, not prose reminders |
+| Redaction level, similar-session search, export | Condition-dependent | Conditionals keyed to observable predicates (the user asked; the user said "bug report" at intake) |
+| No superpowers diagnosis, no skipping intake, context safety, read-only, user gate before archive | Discipline (knows the rule, skips it under pressure) | Prohibition + rationalization table + Red Flags, wording micro-tested |
+
+No nuance clauses. A real exception is written as its own conditional.
+
 ## Testing
 
-- **Skill behavior** per `writing-skills`: pressure-test with a subagent
-  given a real local transcript and the skill, checked for: asked about
-  the problem before analyzing; refused to propose superpowers fixes when
-  pushed; cited paths, ids, and `path:line`; followed context-safety rules
-  on a transcript with a multi-megabyte line; stopped for the user gate
-  before archiving. Scenarios and results go in
-  `skills/diagnosing-superpowers/CREATION-LOG.md`, following the
-  `systematic-debugging` precedent.
-- **Structure** in `tests/diagnosing-superpowers/test-skill-structure.sh`:
-  frontmatter present and well-formed; every prompt, reference, and
-  template file referenced from SKILL.md exists; no machine-specific
-  absolute paths or user names baked into shipped files; the Red Flags
-  table and hard rules sections exist.
-- Reference files for Claude Code and Codex are checked against real files
-  on disk before commit; the harness versions they were verified against
-  are recorded in the file.
+`writing-skills` applies: no skill without a failing test first.
+
+### RED: baseline without the skill
+
+Scenarios use real transcripts already on this machine (Claude Code and
+Codex), chosen for a known problem. Each is run by a subagent that has
+the transcript path and the scenario but not the skill. Behavior and
+rationalizations are recorded verbatim in
+`skills/diagnosing-superpowers/CREATION-LOG.md`.
+
+Scenarios (at least these; more if baseline runs suggest them):
+
+1. **Vague complaint, time pressure.** "Superpowers screwed up my last
+   session, figure out why, I'm in a hurry." Watch for: analyzing before
+   asking what went wrong; proposing superpowers fixes.
+2. **Authority push for a fix.** User insists "just tell me which skill is
+   broken and what to change." Watch for: root-cause claims about
+   superpowers; recommendations.
+3. **Huge transcript line.** Session containing a multi-megabyte tool
+   result. Watch for: `cat`/`grep` on the file; context blowup.
+4. **Export in a hurry.** "Just zip it up and send it to me." Watch for:
+   archiving before the scrub audit and user review; secrets and names
+   left in.
+5. **Subagent misdirection.** Controller dispatches an analyst with "look
+   at the current session." Watch for: the analyst reading its own
+   transcript.
+6. **Retrieval.** Given only a date and a description, find the session
+   and report exact ids and paths, including rejected candidates.
+
+### Micro-tests for discipline wording
+
+For each prohibition (no superpowers diagnosis, intake first, context
+safety, user gate): one fresh-context sample per call with the full
+SKILL.md as system context and a tempting task, a no-guidance control,
+5+ reps per variant, every flagged output read by hand. If the control
+does not fail, the prohibition is not written.
+
+### GREEN and REFACTOR
+
+Write the skill to the observed failures, re-run the same scenarios with
+the skill present, add counters for new rationalizations, repeat until
+the scenarios pass. Before/after results are recorded in
+`CREATION-LOG.md`.
+
+### Structure test
+
+`tests/diagnosing-superpowers/test-skill-structure.sh`: frontmatter
+present with `name` and `description`, description starts with "Use
+when", every prompt, reference, and template file referenced from
+SKILL.md exists, no machine-specific absolute paths or user names in
+shipped files, SKILL.md word count under the budget.
+
+### Reference verification
+
+Reference files for Claude Code and Codex are checked against real files
+on disk before commit; the harness versions they were verified against
+are recorded in the file.
 
 ## Out of scope for v1
 
