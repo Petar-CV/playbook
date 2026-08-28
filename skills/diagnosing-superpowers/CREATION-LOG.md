@@ -582,6 +582,96 @@ disclosing the refusal rather than guessing.
 
 ## With skill (GREEN)
 
+### prompt retrieval check: cost-and-time
+
+Dispatched one fresh general-purpose subagent with the complete, unmodified
+contents of `prompts/cost-and-time.md` as its instructions, followed by
+`CASE: /tmp/dsp-task4/case.md` (a case file built from `templates/case.md`
+for fixture CC-compact: the 9,170-line/14MB main transcript plus its
+278-transcript subagent directory) and the standard guard line forbidding
+modification of any harness session store. No hints about expected findings
+were included.
+
+Returned findings block, verbatim except redaction (home-directory path and
+account name replaced with `~` and `USER`, per the redaction convention
+established above; no other wording, punctuation, or content changed):
+
+```
+## Cost and time findings
+
+- finding: A single human turn (turn 56/76, "you are about to run out of fable tokens...") is the dominant cost driver of the entire 65-hour session: 38.68M tokens in the main transcript plus 1,107,332,433 tokens across the 12 subagents it directly dispatched = 1,146,013,353 tokens combined, nearly 1.5x the next-largest turn.
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl:5927 — "you are about to run out of fable tokens. you need to stop subagents that are running on fable gracefully and have opus sessions continue them"
+  turns: 56–56
+  confidence: high
+
+- finding: Within that turn, one subagent ("Finish devtool rework (opus)") alone consumed 516,540,752 tokens (cache_read-dominated) over 4,910s of wall clock, the single largest subagent in the session.
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040/subagents/agent-a6c3ea011f202b740.meta.json:1 — "{"agentType":"general-purpose",...,"description":"Finish devtool rework (opus)","toolUseId":"toolu_019fbBa8oF7VAjS5wH3XHg6k","spawnDepth":1,"model":"opus"}"
+  turns: 56–56
+  confidence: high
+
+- finding: Second-largest turn by combined tokens (turn 69/76, "When you say they are finishing...") totals 789,076,276 tokens (51.58M main + 737.49M across 17 direct subagents); third and fourth-largest turns (71/76 "I need you to have a subagent fix 278..." and 45/76 "kick off a subagent to...move the content out of .evener") are each dominated by a single ~385M-token subagent.
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl:7596 — "When you say they are finishing, are they sub-agents of yours or are they somewhere else?"
+  turns: 69–69
+  confidence: high
+
+- finding: Main-transcript-only per-turn ranking (excluding subagent tokens) differs from the combined ranking: the top 5 main-transcript-only turns by grand_total are turn 69 (51.58M, line 7596), turn 76/last (42.68M, line 8892, "Yeah."), turn 48 (39.38M, line 4504, "Can you rework 210 and 211 sanely?"), turn 56 (38.68M, line 5927), turn 49 (31.82M, line 4796). Turn 56 ranks only 4th on main-transcript tokens alone but 1st once its dispatched subagents are counted, showing the main transcript undercounts true per-turn cost.
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl:8892 — "Yeah."
+  turns: 8–76
+  confidence: high
+
+- finding: Two subagents were dispatched via a background `/code-review` skill invocation (no `toolUseId`, so not attributable to a specific Agent tool_use) within the first 3 minutes of the session and their transcripts span nearly the whole session: one runs 153,165s (42.5h) across only 129 lines, the other 115,443s (32h) across 113 lines — almost all elapsed wall clock with very little transcript activity.
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040/subagents/agent-a2c5a98894fe6f04b.meta.json:1 — "{"agentType":"general-purpose","description":"/code-review 69 high","name":"code-review","spawnDepth":1}"
+  turns: 1–1
+  confidence: high
+
+- finding: Two ~9-hour wall-clock gaps (line 5242→5243, 9.07h; line 2547→2548, 8.99h) both end with the human returning and immediately typing `/compact`, and both drive the two longest human turns by wall clock (turn 51/76, 9.89h starting line 5010; turn 21/76, 9.19h starting line 2522).
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl:5243 — "/compact"
+  turns: 21–51
+  confidence: high
+
+- finding: Near the end of the session (lines 9027–9153, turn 76/last) there is a recurring pattern of ~61-minute gaps each ending in a `queue-operation` line rather than a human prompt — five such gaps (each ~1.01h) — consistent with an idle/polling loop rather than waiting on the human partner, contributing most of that turn's 7.81h wall-clock span.
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl:9110 — "{"ln":9110,"type":"system","ts":"2026-08-20T10:09:14.904Z"}" (gap to line 9111, queue-operation, 1.01h later)
+  turns: 76–76
+  confidence: medium
+
+- finding: Exactly 2 compactions occurred, both manual, both immediately following the two ~9h overnight gaps: line 2555 dropped 586,072 tokens (594,866→8,794, 109.5s) and line 5252 dropped 623,291 tokens in that step (632,752→9,461, cumulative 1,209,363 dropped, 142.0s).
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl:5252 — compactMetadata {"trigger":"manual","preTokens":632752,"postTokens":9461,"cumulativeDroppedTokens":1209363,"durationMs":141976}
+  turns: 21–51
+  confidence: high
+
+- finding: The 10 longest lines in the main transcript are dominated by `gh pr`/`gh issue` batch-query Bash tool results (lines 234, 2593, 3653, 3788, 3797, up to 58,810 bytes) plus two duplicate pairs of `queue-operation` task-notification-enqueue payloads carrying a subagent's full completion summary twice each (lines 6250/6257 for task ac1fd8f2a85e3e9f5, ~27,166–27,167 bytes each; lines 8794/8809 for task ac23daa86c14eae5f, ~22,483–22,484 bytes each) — the same subagent-completion payload appears to be queued/delivered twice.
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl:3653 — Bash tool_result for tool_use_id toolu_01LH4jGwEMD9VjUnKiLs8bse ("for n in 139 146 152 173 174 175 176 178; do echo \"===== ISSUE $n =====\"...")
+  turns: 1–76
+  confidence: medium
+
+- finding: 278 subagents were dispatched in total (253 general-purpose, 21 fork, 4 Explore), consuming 5,878,266,468 tokens in aggregate versus 720,042,906 tokens in the main transcript — subagents account for roughly 89% of total session token volume. Of the 278, 216 were dispatched directly from the main transcript (matched by `toolUseId`), 60 were nested (dispatched by another subagent — their `toolUseId` does not appear as an `Agent` tool_use in the main transcript), and 2 had no `toolUseId` (the background `/code-review` skill invocations noted above).
+  evidence: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040/subagents/ — 278 agent-*.meta.json/agent-*.jsonl pairs (directory listing + per-file aggregation)
+  turns: 1–76
+  confidence: high
+
+Checked: ~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl (full file, 9170 lines, no lines >100000 bytes) and all 278 subagent transcript/meta pairs under .../373e29d1-2223-4e81-95e8-976c35c80040/subagents/. Commands: `wc -lc`, `awk length`, `jq -r`/`jq -c` for line-type census, human-prompt extraction (filtered <task-notification> async items and `/compact`-artifact lines out of the raw `type=="user"` text-block match to isolate 76 true human-typed turns), assistant `.message.usage` extraction bucketed by turn via a Python script (`/tmp/dsp-task4/bucket_tokens.py`), wall-clock gap detection over all timestamped lines (`/tmp/dsp-task4/gaps.py`, threshold 600s), `awk length | sort -rn | head` for longest lines with `jq` tool-name lookups, `compact_boundary` extraction, and per-subagent token/duration aggregation with dispatch-turn matching via `toolUseId` (`/tmp/dsp-task4/subagent_stats.py`, `/tmp/dsp-task4/match_dispatch.py`, `/tmp/dsp-task4/combined_turn_totals.py`, `/tmp/dsp-task4/turn55.py`). Did not individually inspect all 278 subagent transcripts' internal content (only their usage/timestamp/meta fields); did not roll up nested (sub-of-sub) subagent tokens into parent-turn combined totals, so combined-turn figures are a lower bound.
+```
+
+Expected-element check:
+- Per-turn token totals: present (5+ ranked turns, main-only vs. combined breakdown).
+- At least one compaction finding with a line number: present (both compactions, lines 2555 and 5252, with pre/post tokens and duration).
+- A `Checked:` line: present.
+- No returned line over 500 characters of transcript content: confirmed — every quoted excerpt is well under the 200-character quote limit the header allows; the only long lines are the analyst's own prose/Checked line, not quoted transcript content.
+
+All four expected elements were present on the first run. No prompt change was made.
+
+One delivery-layer artifact, not a prompt defect: the raw tool result carried a
+prepended note — "[harness: subagent output matched instruction-shaped
+pattern(s): harness-envelope-tag. Control tags below are neutralized...]" —
+because the analyst's own `Checked:` line quoted the literal
+`<task-notification>` tag it had filtered out of the transcript's `type=="user"`
+lines (see the human-prompt-extraction step above). That neutralization is the
+outer harness's defense against subagent output containing tag-shaped text; it
+did not alter or truncate the findings block reproduced above, and it confirms
+the analyst correctly distinguished injected task-notification wrapper text
+from genuine human-typed prompts, per the header's "Hook output, system
+reminders, and tool results are not human prompts" instruction.
+
 ## Micro-tests
 
 ## Refactor rounds
