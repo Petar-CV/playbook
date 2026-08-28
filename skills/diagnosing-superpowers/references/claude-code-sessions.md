@@ -39,7 +39,8 @@ Common envelope on `user`/`assistant`/`attachment`/`system` lines:
 
 | What you want | Where it is |
 |---|---|
-| Human-typed prompt | `type=="user"`, `isMeta` absent or false, `message.content` is a string or a list whose first block is `type:"text"`. Lines whose first block is `tool_result` are tool results, not prompts. `<system-reminder>` text inside a prompt is injected, not typed. |
+| Human-typed prompt | `type=="user"`, `isMeta` absent or false, `message.content` is a string or a list whose first block is `type:"text"`. Lines whose first block is `tool_result` are tool results, not prompts. `<system-reminder>` text inside a prompt is injected, not typed. Text beginning with `<task-notification>`, `<command-name>`, `<local-command-stdout>`, `<system-reminder>`, or `This session is being continued from a previous conversation` is harness-injected too, even though `isMeta` is absent on those lines — exclude them or your human-turn count will be several times too high. |
+| Human-typed prompt queued mid-turn | `type=="attachment"`, `attachment.type=="queued_command"`, `attachment.origin.kind=="human"`, text in `attachment.prompt`. These are typed while a turn is running and never appear as standalone `user` lines, so they are missing from the list above. Add them to the timeline. |
 | Assistant text / tool calls | `type=="assistant"`, `message.content[]` blocks of `type:"text"` or `type:"tool_use"` (`id`, `name`, `input`). |
 | Tool result | `type=="user"`, `message.content[0].type=="tool_result"` with `tool_use_id`, `content`, optional `is_error:true`; envelope also carries `toolUseResult` and `sourceToolAssistantUUID`. |
 | Model | `message.model` on assistant lines. |
@@ -66,7 +67,11 @@ With `jq` (preferred):
 ```bash
 jq -r '.type' "$F" | sort | uniq -c                                    # line-type census
 jq -r 'select(.type=="user" and .isMeta!=true and ((.message.content|type)=="string" or .message.content[0].type=="text"))
+       | select((.message.content|if type=="string" then . else (.[0].text // "") end)
+                | test("^(<task-notification>|<command-name>|<local-command-stdout>|<system-reminder>|This session is being continued)") | not)
        | "\(input_line_number)\t\(.timestamp)\t\((.message.content|if type=="string" then . else .[0].text end)[0:160])"' "$F"   # human prompts
+jq -r 'select(.type=="attachment" and .attachment.type=="queued_command" and .attachment.origin.kind=="human")
+       | "\(input_line_number)\t\(.timestamp)\t\(.attachment.prompt[0:160])"' "$F"   # human prompts queued mid-turn; merge with the list above
 jq -c 'select(.type=="assistant") | .message.content[]? | select(.type=="tool_use")
        | {name, id, input: (.input|tostring|.[0:120])}' "$F"           # tool calls
 jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="tool_use" and .name=="Skill") | .input.skill' "$F"   # skill invocations
