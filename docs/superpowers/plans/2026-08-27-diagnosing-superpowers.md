@@ -27,13 +27,15 @@
 
 ## Local fixtures (this machine only, never copied into shipped files)
 
-| Fixture | Path | Why |
+| Fixture | Session id | Characteristics |
 |---|---|---|
-| CC-huge | `~/.claude/projects/-Users-jesse-git-prime-radiant-smevals/7619e0b6-b592-4142-97b5-9dd7e9a61130.jsonl` | 12 MB, one line is 1.3 MB: context-safety scenario |
-| CC-compact | `~/.claude/projects/-Users-jesse-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl` (+ `373e29d1-…/subagents/`) | 14 MB, has `compact_boundary` entries and seven subagent transcripts: plan-adherence, repeated-work, cost scenarios |
-| CC-this | `~/.claude/projects/-Users-jesse-git-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl` | The session that designed this skill: skill-timeline (three `attributionSkill` values), live-session scenario |
-| CX-big | `~/.codex/sessions/2026/08/08/rollout-2026-08-08T18-11-12-019fe412-e876-7293-8369-51823c634878.jsonl` | 153 MB Codex rollout with `context_compacted`, `sub_agent_activity`, `turn_aborted`: Codex reference verification and retrieval scenario |
-| CX-sub | `~/.codex/sessions/2026/08/27/rollout-2026-08-27T09-12-21-01a043fe-6785-74c3-a4f8-67994723bbcb.jsonl` | Codex subagent rollout (`thread_source: subagent`, `parent_thread_id`) |
+| CC-huge | `7619e0b6-b592-4142-97b5-9dd7e9a61130` | Claude Code, 12 MB, one 1.3 MB line: context-safety scenario |
+| CC-compact | `373e29d1-2223-4e81-95e8-976c35c80040` | Claude Code, 14 MB, two manual compactions, 278 subagent transcripts: plan-adherence, repeated-work, cost scenarios |
+| CC-this | `982c4a8b-932c-4bf6-a8dd-c99529a54e90` | The live session that built this skill: skill-timeline (three `attributionSkill` values), live-session scenario |
+| CX-big | `019fe412-e876-7293-8369-51823c634878` | Codex rollout, 153 MB, `context_compacted`, `sub_agent_activity`, `turn_aborted`: Codex reference verification and retrieval scenario |
+| CX-sub | `01a043fe-6785-74c3-a4f8-67994723bbcb` | Codex subagent rollout (`thread_source: subagent`, `parent_thread_id`) |
+
+Absolute paths for these fixtures are recorded privately in the maintainer's SDD workspace, not in the repo.
 
 Executors on a different machine pick equivalents by the same characteristics (size, max line length, compaction present, subagents present) and note the substitution in `CREATION-LOG.md`.
 
