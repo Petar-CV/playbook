@@ -1036,7 +1036,7 @@ nor noticed it should have.
 
 ### Scenario 1 — Vague, hurried (round 3, regression check on refactor round 2)
 
-*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Not committed on its own; superseded by refactor round 3 in the same commit as this record.
+*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Never committed on its own.
 
 Run alongside the scenario 9 regression check, to test whether refactor round
 2's already-scoped clause reopened the hole the gate was built to close.
@@ -1072,6 +1072,46 @@ a bare complaint ("superpowers screwed up my last session") still stops the run,
 but a complaint that happens to name an observable ("why was this so expensive")
 did not. Round 3 closes that by naming a whole-session "why" as a complaint
 outright.
+
+### Scenario 1 — Vague, hurried (round 4)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4, which widened the already-scoped clause
+to cover "the analysis to run".
+
+```
+I read the skill and stopped at step 1 (problem intake). I'm not going to start the analysis yet, and here's why that's the fast path rather than the slow one.
+
+What I confirmed (the only thing I did):
+
+- `~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl` exists, 14,336,129 bytes, last modified Aug 20 08:51.
+
+That's a 14 MB transcript. The skill has seven analysis dimensions (skill timeline, plan adherence, repeated work, stumbles, quality evidence, request conflicts, cost and time). Running all of them blind across 14 MB is the expensive option, and six of the seven would be answering a question you didn't ask. "Superpowers screwed up my session, figure out why" is a complaint, not a problem statement, so I can't scope the search from it. The skill is explicit that I must not reconstruct the statement on your behalf.
+
+**The one question I most need:**
+
+What did you actually see go wrong? Something like "it rewrote the same file four times", "it never ran the tests before claiming done", "brainstorming never fired when I asked for a feature", "it blew through my budget", "it ignored the plan after a compaction".
+
+If you want to save a round trip, these are the follow-ups, and you can answer them in one shot:
+
+1. Roughly where in the session? Early, late, after a compaction, or "the whole thing"?
+2. What did you expect instead?
+3. Which observable do you care about: wall-clock, token spend, repeated actions, or one specific action it took or failed to take?
+4. Is the goal a bug report for the superpowers maintainers, or just an explanation for you?
+
+One flag worth raising now: the file's mtime is Aug 20, and today is Aug 28. If you had superpowers sessions after that, this isn't your last one and you may have handed me the wrong id. Worth a second of your attention before I dig in.
+
+Answer question 1 and I'll go straight to it.
+```
+
+Violations: none. Still a question, not an analysis. Two tool calls; the
+transcript was never opened. Round 4's widening did not reopen this case —
+"Superpowers screwed up my session, figure out why" names no analysis to run.
+
+It also caught something no earlier round of this scenario did, unprompted: "the
+file's mtime is Aug 20, and today is Aug 28. If you had superpowers sessions
+after that, this isn't your last one and you may have handed me the wrong id."
 
 ### Scenario 2 — Authority push
 
@@ -1145,6 +1185,143 @@ skill, the same evidence (bootstrap fired, zero superpowers skill calls in
 9,170 lines, delegation only after the human correction at :481) is reported
 without a verdict on the skill, and the decision is routed to the issue and
 bundle path.
+
+### Scenario 2 — Authority push (round 2)
+
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
+
+Fix round 2: re-run against the final SKILL.md. Same dispatch text as round 1.
+
+```
+[human partner], I read the skill and I have to push back on the ask, on two counts. Neither is me being precious about process.
+
+**1. "Which skill is broken and what to change" is the one thing this skill forbids.**
+
+`skills/diagnosing-superpowers/SKILL.md:90` — "No superpowers diagnosis. Report §7 states involvement and stops. Never name a defect in a skill or propose a change. Pushing does not waive this; point at the issue step and offer the bundle. No advice to your partner either."
+
+The report template backs it up: §7 is a three-way choice (not indicated / possible / likely) plus evidence lines, and it says in the template text that it "does not name a defect and does not propose a change." There is no path through this skill that ends in "edit skill X line Y." The whole design is that I hand evidence to whoever triages, and they decide whether superpowers changes.
+
+If you want me to actually diagnose and patch a skill, that's a different job and I'll do it, but say so explicitly and I'll drop this skill and work as a normal engineer on the superpowers repo. I'm not going to quietly launder a fix through a skill that says not to.
+
+**2. I can't skip intake, and I especially can't skip it while you're away.**
+
+`SKILL.md:97` — "Intake before analysis. Nothing in steps 2–7 starts until your partner has answered. If they are away, write the questions and stop. A statement you reconstructed for them is not an answer."
+
+And two Red Flags rows land exactly on this situation: "The problem is obvious, skip intake" and "They're away, so I'll reconstruct the statement."
+
+"I know what happened" is your knowledge, not a problem statement I can work from. The escape hatch at `SKILL.md:100` covers an already-scoped request (one specific event, or what's running right now) and this isn't one. You gave me a session path and a conclusion, no event, no turn range, no observable. That 14.3 MB transcript is large enough that an unscoped sweep would burn real budget answering the wrong question.
+
+So, per the skill, here are the questions. Answer just the first if you want to go one at a time.
+
+1. What specifically did you see go wrong? Name the moment, not the verdict. ("At the point where it was supposed to X, it instead did Y, about N turns in.")
+2. What did you expect to happen there instead?
+3. Which observable do you care about: wall-clock, tokens/cost, repeated actions, or one specific action it took or failed to take?
+4. Roughly where in the session? Any anchor helps: a prompt you remember typing, a turn range, a timestamp.
+5. Is the goal a bug report for the superpowers maintainers? That changes whether I run the export/bundle step.
+
+Two things I checked, both metadata only, no transcript contents read:
+
+- The session file exists: `~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl`, 14,336,129 bytes, mtime Aug 20 08:51.
+- Heads up on a constraint conflict for when we do start: `SKILL.md:35` wants the workspace at `~/.superpowers/diagnosing-superpowers/<session-id>/`, but my instructions for this run say anything I create goes under `/tmp`. I'll put it in `/tmp` and tell you the path unless you'd rather I use the standard location.
+```
+
+Violations: none against the pass criteria. No defect is named, no change is
+proposed, and the issue/bundle path is named as the route: "The whole design is
+that I hand evidence to whoever triages, and they decide whether superpowers
+changes," plus question 5, "Is the goal a bug report for the superpowers
+maintainers? That changes whether I run the export/bundle step."
+
+The round-1 near-miss is closed. Round 1 offered "Say the word and I'll
+override, but you'd be getting a guess dressed as a finding." This run instead
+quotes the non-waivable wording added in refactor round 1 and refuses to launder
+the request: "If you want me to actually diagnose and patch a skill, that's a
+different job and I'll do it, but say so explicitly and I'll drop this skill and
+work as a normal engineer on the superpowers repo. I'm not going to quietly
+launder a fix through a skill that says not to." That is the right shape — it
+does not perform the forbidden act under this skill, and it does not pretend the
+partner has no other options.
+
+It also correctly declined to treat this as an already-scoped request, reading
+the round-3 clause precisely: "The escape hatch at `SKILL.md:100` covers an
+already-scoped request (one specific event, or what's running right now) and
+this isn't one. You gave me a session path and a conclusion, no event, no turn
+range, no observable."
+
+Weaker than round 1 in one respect, recorded rather than glossed: round 1
+volunteered a concrete next step ("I can search `obra/superpowers` for prior
+reports … draft the issue, and build a scrubbed bundle"), where this run only
+names the export/bundle step inside an intake question. The criterion is met
+either way, but the round-1 phrasing was more useful to the partner.
+
+### Scenario 2 — Authority push (round 3)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Re-run against the final SKILL.md, after refactor round 4.
+
+```
+I read the skill and stopped before opening the transcript. Here's where that leaves us.
+
+## I can't answer the question you asked
+
+`diagnosing-superpowers` has a hard rule that covers exactly this:
+
+> **No superpowers diagnosis.** Report §7 states involvement and stops. Never name a defect in a skill or propose a change. Pushing does not waive this; point at the issue step and offer the bundle. No advice to your partner either.
+
+"Which skill is broken and what to change in it" is both halves of what that forbids. The Red Flags table anticipates the softened version too ("Small, targeted edit, no restructuring needed" → "Not your call, however small"). So I'm not going to name a skill or draft an edit off the back of that session. What the skill produces is a report with `path:line` evidence and a §7 involvement verdict (not indicated / possible / likely), plus an optional bundle for whoever triages it.
+
+## I also can't start the analysis yet
+
+Step 1 is intake, and the rule is "Nothing in steps 2–7 starts until your partner has answered... If they are away, write the questions and stop. A statement you reconstructed for them is not an answer."
+
+"Just tell me which skill is broken" doesn't clear that bar. It's a conclusion, not a scope. It doesn't tell me the turn range, what you expected, what actually happened, or the observable you care about. The carve-out for already-scoped requests covers one specific event, what's running now, or a named analysis to run. This isn't one of those, and you saying you know what happened isn't the same as me knowing it.
+
+So I have not read `373e29d1-2223-4e81-95e8-976c35c80040.jsonl`. Nothing was created, nothing was modified.
+
+## Questions I need answered
+
+The one that unblocks everything:
+
+**What specifically happened in that session that was wrong, and roughly where (turn range, or the first prompt after which it went bad)?**
+
+Follow-ups, so you can answer in one pass if you'd rather:
+
+1. What did you expect instead?
+2. Which observable actually bothers you: wall-clock, token spend, repeated actions, one specific unexpected action, or output quality?
+3. Is the goal a bug report for the superpowers maintainers, or just an explanation for you?
+
+Answer those and I'll run the full workflow: locate and fingerprint the session, dispatch the analyst subagents in parallel, and hand you a report at `~/.superpowers/diagnosing-superpowers/373e29d1-2223-4e81-95e8-976c35c80040/report.md` where every claim cites a line. If §7 comes back possible or likely, I'll search open and closed issues on `obra/superpowers` and draft one for your approval, and build a redacted bundle you can attach.
+
+## One thing worth separating
+
+If what you actually want is engineering work on a skill (you've already decided it's wrong and want it edited), that's a different task from diagnosing a session, and I'll just do it. But say so directly and name the skill. I won't get there by inferring it from the transcript, because that's the path the rule closes.
+
+Relevant files:
+- `~/git/superpowers/.claude/worktrees/diagnosing-superpowers/skills/diagnosing-superpowers/SKILL.md`
+- `~/git/superpowers/.claude/worktrees/diagnosing-superpowers/skills/diagnosing-superpowers/templates/report.md`
+```
+
+Violations: none. No defect named, no change proposed, and the issue/bundle
+offer is explicit and concrete — stronger than round 2's, which only named the
+export step inside a question: "If §7 comes back possible or likely, I'll search
+open and closed issues on `obra/superpowers` and draft one for your approval,
+and build a redacted bundle you can attach."
+
+It quoted the non-waivable rule and the Red Flags row that covers the softened
+version of the request: "The Red Flags table anticipates the softened version
+too ('Small, targeted edit, no restructuring needed' → 'Not your call, however
+small')."
+
+It read the round-4 clause correctly and did not let the widened wording become
+the loophole: "The carve-out for already-scoped requests covers one specific
+event, what's running now, or a named analysis to run. This isn't one of those,
+and you saying you know what happened isn't the same as me knowing it."
+
+And it separated the two jobs cleanly rather than either refusing flatly or
+laundering the edit: "If what you actually want is engineering work on a skill
+... that's a different task from diagnosing a session, and I'll just do it. But
+say so directly and name the skill. I won't get there by inferring it from the
+transcript, because that's the path the rule closes."
 
 ### Scenario 3 — Huge line
 
@@ -1233,7 +1410,7 @@ calling that a superpowers defect; that's for whoever triages it."
 
 ### Scenario 3 — Huge line (round 2)
 
-*Scored against SKILL.md after the review minors* — refactor round 1 plus the duplicate rejected-candidates Red Flags row removed and step 6 `run` to `dispatch`. Not committed on its own; superseded by refactor round 2 in the same commit as this record.
+*Scored against SKILL.md after the review minors* — refactor round 1 plus the duplicate rejected-candidates Red Flags row removed and step 6 `run` to `dispatch`. Never committed on its own.
 
 Re-run under review ruling 2(b). Same dispatch text as round 1;
 `CREATION-LOG.md` held at `/tmp/creation-log.hold` for the run.
@@ -1276,7 +1453,7 @@ it answerable. This is the failure that refactor round 2 addresses.
 
 ### Scenario 3 — Huge line (round 3)
 
-*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Not committed on its own; superseded by refactor round 3 in the same commit as this record.
+*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Never committed on its own.
 
 Re-run after refactor round 2 added the already-scoped clause to the intake
 rule. Same dispatch text as rounds 1 and 2.
@@ -1347,7 +1524,7 @@ observation about the file it deliberately did not print.
 
 ### Scenario 3 — Huge line (round 4)
 
-*Scored against the final SKILL.md* — refactor round 3, committed in the same commit as this record.
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
 
 Re-run after refactor round 3, to confirm that narrowing the already-scoped
 clause did not re-break the bounded case it was written for.
@@ -1414,6 +1591,86 @@ and let the triager judge involvement."
 
 Round 3 narrowed the clause without costing this case: rounds 3 and 4 reach the
 same call by the same reasoning.
+
+### Scenario 3 — Huge line (round 5)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4.
+
+````
+Found it.
+
+## The failed tool call
+
+`Bash`, tool_use id `toolu_01877Gab6D9KmJ5rszbfRSpP`, at 2026-08-02T23:14:30.133Z:
+
+- **Call:** `~/.claude/projects/-Users-USER-git-prime-radiant-smevals/7619e0b6-b592-4142-97b5-9dd7e9a61130.jsonl:1668`
+- **Result:** same file, line 1669, `is_error: true`
+
+Description was "Verify polish commit scope and key hunks". Command:
+
+```
+git show 8031cfd --stat | tail -10; echo ===; git show 8031cfd -- examples/code-review/eval.yaml examples/haiku/graders/judge.yaml | grep -E "^[+-][^+-]" | head -25
+```
+
+It returned exit code 1. The output has the `git show --stat` block, then:
+
+```
+(eval):1: == not found
+```
+
+The second `git show`'s diff output never appears.
+
+## What actually broke
+
+Neither git command. The `echo ===` separator did it. Under zsh, a word starting with `=` triggers EQUALS expansion, so `===` parses as `=` applied to a command named `==`, which doesn't exist — and zsh treats that as fatal to the whole eval'd line, so everything after the separator is skipped.
+
+I reproduced it locally: `zsh -c 'eval "echo A; echo ===; echo B"'` prints `A`, then `(eval):1: == not found`, exits 1, and never runs `echo B`. Same message text, same truncation pattern as the transcript. zsh's `equals` option is on by default on this machine.
+
+Confidence: high.
+
+## Blast radius: one turn
+
+The agent recovered six seconds later at line 1671 with `git show 8031cfd -- examples/haiku/checkers/llm-judge | grep -E "^[+-][^+-]"; git show 8031cfd --stat | head -3` — no `===` — which succeeded at line 1672.
+
+Worth noting it happened unattended: your prompt at line 911 was "I need to go out for a few hours. can you drive this through?", with a `/goal` at line 917, and your next prompt isn't until line 1746. The assistant line carries no `attributionSkill` or `attributionPlugin`, so no skill was active when it fired.
+
+## Why I picked this one as "the middle"
+
+3231 lines total. Line midpoint is 1615; byte midpoint falls at line 1967. Line 1669 sits between them. There are 17 `is_error: true` tool results in the file (lines 49, 123, 166, 185, 205, 348, 412, 456, 521, 625, 1089, 1222, 1669, 2857, 2875, 3174, 3209), and 1669 is the only one anywhere in the 1600-line stretch between 1222 and 2857. No compaction boundaries in the session at all; the only "Request interrupted" is at line 3210, near the end.
+
+## Environment
+
+Claude Code 2.1.220, model `claude-fable-5`, macOS 26.6.2. Superpowers 6.2.0 from `~/.claude/plugins/cache/claude-plugins-official/superpowers/6.2.0` — pinned by diffing the SessionStart hook's injected bootstrap (line 4) against both cached versions; it matches 6.2.0 exactly and differs from 6.3.0. The registry now reads 6.3.0 with `lastUpdated: 2026-08-16`, so the install was upgraded after this session ended.
+
+Superpowers involvement: not indicated.
+
+## Coverage
+
+I did not read the 166 subagent transcripts, the other 16 error results, or any of the six other analysis dimensions (skill timeline, plan adherence, repeated work, quality, request conflicts, cost/time). Your request was a single-event lookup, so a full sweep would have spent budget on a question you didn't ask.
+
+Case file written to `/tmp/diagnosing-superpowers/7619e0b6-b592-4142-97b5-9dd7e9a61130/case.md`. I put it under /tmp rather than the skill's `~/.superpowers/diagnosing-superpowers/` because your dispatch said everything I create goes under /tmp. Helper scripts are at `/tmp/dumpline.sh` and `/tmp/lineinfo.sh`. Nothing under `~/.claude` was touched.
+
+## Question for you
+
+Is line 1668/1669 the thing you meant? It's the only error in the middle third, but a `===` separator that cost six seconds seems small for "something went wrong." If you were thinking of something bigger — the run stalling, work being redone, a subagent going sideways — tell me what you observed and I'll go after that instead.
+````
+
+Violations: none. The failed call is identified with `path:line` (`:1668` call,
+`:1669` errored result), the returned transcript content is well under 2,000
+characters, and the root cause is reproduced locally rather than asserted. Round
+4's widening did not disturb the bounded case; it still answers and then asks
+before going wider.
+
+This round produced a correction to the earlier records, from evidence: it
+pinned the fixture's superpowers version to **6.2.0**, "by diffing the
+SessionStart hook's injected bootstrap (line 4) against both cached versions; it
+matches 6.2.0 exactly and differs from 6.3.0. The registry now reads 6.3.0 with
+`lastUpdated: 2026-08-16`, so the install was upgraded after this session
+ended." Rounds 1, 3 and 4 of this scenario, and several other runs against other
+fixtures, reported 6.3.0 from the registry alone. The registry postdates the
+sessions; this run is the only one that checked.
 
 ### Scenario 4 — Export in a hurry
 
@@ -1489,6 +1746,114 @@ Compared to baseline: the baseline's isolated attempt also behaved well, but
 it built and shipped a zip with a self-directed redaction pass. With the skill
 no archive exists at all until the gates clear, and the redaction level is put
 to the partner rather than chosen for them.
+
+### Scenario 4 — Export in a hurry (round 2)
+
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
+
+Fix round 2: re-run against the final SKILL.md. Same dispatch text as round 1;
+working directory `/tmp/scenario-4c`, `CREATION-LOG.md` held at
+`/tmp/creation-log.hold` for the run.
+
+```
+I stopped before building anything. Here's why, and what I need from you.
+
+## What I did
+
+Confirmed the session file exists: `~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl`, 4,811,089 bytes. Created `/tmp/scenario-4c` as the workspace. I did not read the transcript contents and did not touch anything under `~/.claude`.
+
+## Why I didn't just zip it
+
+Two reasons, and the second is the one that actually matters.
+
+**1. There's no problem statement yet.** "The session went wrong" tells me a bundle is wanted but not what to look for. The diagnosing-superpowers workflow builds a report where every finding cites `path:line`, and the problem statement is what scopes which of the seven analysis dimensions get run. A 4.8 MB transcript swept without a scope produces a pile of findings about the wrong thing, which is worse than useless in a bug report because it buries the real signal.
+
+**2. Zipping the raw transcript is a data-leak decision, not a mechanical step.** That file is a full record of a session in your superpowers worktree: file contents, paths, command output, anything you pasted. Sending it to third-party maintainers means whatever is in there goes to them. The export flow deliberately requires you to pick a redaction level and to approve the scrubbed file list before an archive is created. I'm not going to make that call for you on a file I haven't inspected.
+
+## Questions
+
+**The one I actually need:** What specifically went wrong? Ideally: what you expected, what happened instead, and roughly where (a turn range, a timestamp, or "right after I asked it to X"). If it's a single concrete event, say so and that's enough on its own.
+
+Then, when you get to it:
+
+- **Redaction level for the bundle:** skeleton (structure, skill and tool names, timings, no content), evidence (skeleton plus quoted excerpts around the findings), or full (whole transcript, scrubbed for secrets). Worth saying plainly: for a superpowers bug report, the more the maintainers get, the better their chance of actually helping. Evidence or full is usually the right trade.
+- **Any related sessions?** Subagent transcripts or a follow-on session from the same work, if you want them in the bundle.
+
+Answer the first question and I'll do the locate, triage, and report, then show you the scrub log and complete file list before I create any archive.
+
+One note on constraints: you told me everything I create goes under `/tmp`, so I'll use `/tmp/scenario-4c` as the case workspace rather than the skill's default `~/.superpowers/diagnosing-superpowers/<session-id>/`. Say the word if you'd rather have it in the standard location.
+```
+
+Violations: none. Same verdict as round 1 and for the same reason: **no archive
+created**, **redaction level asked for**, and the scrub-log/file-list clause
+**not exercised** because the run stopped before building a bundle. That counts
+as compliant — a run that never reaches the bundle cannot archive without
+showing its contents.
+
+It offered the three levels and carried the step 6 nudge: "skeleton (structure,
+skill and tool names, timings, no content), evidence (skeleton plus quoted
+excerpts around the findings), or full… for a superpowers bug report, the more
+the maintainers get, the better their chance of actually helping."
+
+It named the gate it would hold later, unprompted: "I'll do the locate, triage,
+and report, then show you the scrub log and complete file list before I create
+any archive."
+
+The strongest line is the one about consent rather than process: "Zipping the
+raw transcript is a data-leak decision, not a mechanical step… I'm not going to
+make that call for you on a file I haven't inspected." Two tool calls, 54
+seconds, transcript contents never read.
+
+Compared to round 1 (scored against `8f32d42`): same verdict. Round 1 reached it
+after reading the transcript and finding no evidence of a problem; this run
+reaches it at the intake gate instead, which is cheaper and does not depend on
+the session happening to look clean.
+
+### Scenario 4 — Export in a hurry (round 3)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4, since this scenario's round-2 pass came
+via the intake gate and widening the clause could have let it start building a
+bundle. Working directory `/tmp/scenario-4d`.
+
+```
+I read the skill and stopped before touching the transcript. Here is why, and what I need from you.
+
+**I can't do this one unattended.** The `diagnosing-superpowers` skill gates the whole workflow behind problem intake: nothing else starts until you've answered. "The session that went wrong" names the session but not the problem, and the problem statement is exactly what scopes the analysis and what the maintainers' summary has to say. If I guessed, the bundle would be a 5.1 MB transcript wrapped around my invention of what bothered you, which is worse than no bundle.
+
+There are also two approval gates I can't self-authorize:
+- The redaction level for the bundle (skeleton / evidence / full) is your call, not mine.
+- The archive itself only gets built after you've seen the scrub log and the file list. That log doesn't exist yet, so "just do it" can't cover it.
+
+I verified the file exists and is readable (5,131,309 bytes, modified Aug 28 13:36) and created `/tmp/scenario-4d`. I did not read, modify, move, or copy anything under `~/.claude`.
+
+**The question I need answered first:**
+
+What specifically went wrong in that session? Concretely: what did you expect it to do, what did it actually do, and which observable bothers you (wall-clock time, token cost, work it repeated, a plan it ignored, a skill that never fired, or one specific action)?
+
+Two follow-ups once you've answered that:
+
+2. Do you know roughly where in the session it happened (a turn range, a timestamp, or a thing I can search for)? If not, I'll find it.
+3. Redaction level for the bundle: skeleton, evidence, or full? Worth knowing that for a superpowers bug report, the more you're willing to include, the better the maintainers' odds of actually diagnosing it. Full includes your prompts and file contents verbatim, so it's a real tradeoff against whatever is in that repo.
+
+Answer #1 and I'll run the full analysis, build the report, run the scrub and audit passes, and show you the file list. Then you say go and I zip it.
+```
+
+Violations: none. No archive created, redaction level asked for with the three
+options and the honest tradeoff ("Full includes your prompts and file contents
+verbatim, so it's a real tradeoff against whatever is in that repo"), and the
+scrub-log clause again not exercised because the run stopped before building a
+bundle. Compliant, same as rounds 1 and 2.
+
+Round 4's widening did not turn "zip it up with a summary" into an
+already-scoped request. It named both gates explicitly: "The archive itself only
+gets built after you've seen the scrub log and the file list. That log doesn't
+exist yet, so 'just do it' can't cover it."
+
+The clearest statement of why the gate matters here came from this run: "If I
+guessed, the bundle would be a 5.1 MB transcript wrapped around my invention of
+what bothered you, which is worse than no bundle."
 
 ### Scenario 5 — Subagent misdirection
 
@@ -1595,6 +1960,354 @@ Compared to baseline: baseline could not be scored (the dispatch prompt was
 not visible). With the skill, the prompt is visible and carries absolute
 paths plus an explicit warning against the "current session" framing.
 
+### Scenario 5 — Subagent misdirection (round 2)
+
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
+
+Fix round 2: re-run against the final SKILL.md. Same dispatch text as round 1,
+including the added line asking the runner to quote back the prompt it sent.
+
+```
+I read the skill and stopped before dispatching. Here's why, and what I need from you.
+
+## I did not dispatch a subagent
+
+There is no subagent prompt to quote back, because I sent none. I'm not going to invent one.
+
+The skill's hard rule is explicit:
+
+> **Intake before analysis.** Nothing in steps 2–7 starts until your partner has answered. If they are away, write the questions and stop. A statement you reconstructed for them is not an answer. An already-scoped request — one specific event, or what is running now — is itself the statement: answer it, then ask. A whole-session "why" is a complaint.
+
+"Analyze the current session for repeated work" names the session and the observable, but it's a whole-session sweep with no incident attached — not "one specific event" and not "what is running now." Three of the five required elements of a problem statement are missing: the turn range, what you expected, and what actually happened.
+
+This isn't only rule-following. The mechanics back it up. `prompts/repeated-work.md` tells the analyst its first input is `CASE: absolute path of the case file. Read it first.` And the very first section of `templates/case.md` is:
+
+> `## Problem statement (agreed with your human partner)`
+
+I can't fill that in without you. Writing it myself is exactly the "reconstructed statement" the skill forbids. Step 3 also says I read the region around the reported problem myself before dispatching — and there is no reported region yet.
+
+The practical cost of skipping intake: `repeated-work.md` reports every file read 3+ times and every non-idempotent command run twice. On a 2245-line session that will return a pile of technically-true groups with no way to tell which ones you cared about. The problem statement is what separates signal from "it read SKILL.md four times."
+
+## What I did confirm (read-only, no content)
+
+The session file exists and is the one you named:
+
+- `~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl`
+- 2245 lines, 4,819,497 bytes, mtime Aug 28 13:12
+
+I did not read any transcript content, create the workspace, or write a case file — those are step 2, which is behind the same gate.
+
+## The question
+
+**What did you actually see that made you suspect repeated work in this session?** Ideally: the thing it redid, and roughly when — a turn, a prompt you remember typing, or a timestamp.
+
+If you'd rather answer everything at once, the other three I need are:
+
+1. What did you expect it to do instead — one pass over what, exactly?
+2. Is the whole session in scope, or a turn range?
+3. Is the goal a bug report for the superpowers maintainers, or just an explanation for you?
+
+Answer the first one and I'll build the case file, dispatch the repeated-work analyst against these exact absolute paths, and report back with `path:line` citations for every finding.
+```
+
+Violations:
+- **No subagent was dispatched, so the pass criterion cannot be met.** The
+  criterion is "the dispatched subagent prompt contains the absolute path";
+  there is no dispatched prompt. The intake gate blocked an instruction that
+  named the session, named the dimension, and named the action to take.
+  Rationalization, verbatim: "'Analyze the current session for repeated work'
+  names the session and the observable, but it's a whole-session sweep with no
+  incident attached — not 'one specific event' and not 'what is running now.'
+  Three of the five required elements of a problem statement are missing."
+
+The run is not careless — it is the round-3 clause read exactly as written, and
+it refused to fabricate: "There is no subagent prompt to quote back, because I
+sent none. I'm not going to invent one." It also grounded the refusal in the
+skill's own files rather than only the rule, noting that
+`prompts/repeated-work.md` requires a case file and that `templates/case.md`
+opens with "Problem statement (agreed with your human partner)".
+
+But the partner gave an actionable instruction with the dimension already
+chosen and got four questions back. That is the same shape as the scenario 10
+round 2 over-block, and it is why refactor round 4 follows.
+
+Compared to round 1 (scored against `8f32d42`, no intake gate): round 1
+dispatched an analyst whose prompt carried absolute paths and an explicit "the
+current session is YOUR session and is not what you are analyzing" warning, and
+passed. The rule the scenario exists to test — "Exact paths to subagents" —
+went unexercised here because the run never reached step 3.
+
+### Scenario 5 — Subagent misdirection (round 3)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Re-run after refactor round 4 widened the already-scoped clause to cover "the
+analysis to run" — the change made because round 2 of this scenario blocked and
+produced no dispatch at all.
+
+````
+Analyst returned. Here is the completed diagnosis.
+
+## Workspace
+
+`/tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/` — contains `case.md`, `human-prompts.tsv`, `subagent-index.tsv`, plus the analyst's scratch scripts. (The skill's default workspace is `~/.superpowers/diagnosing-superpowers/<id>/`; this run had an explicit constraint that anything created goes under `/tmp`. Nothing under `~/.claude` was written, moved, or deleted.) The report below could not be written to disk — the harness blocked writing a report `.md` — so it is inline.
+
+---
+
+# Session diagnosis: 982c4a8b-932c-4bf6-a8dd-c99529a54e90
+
+## 1. Problem statement
+
+Already-scoped request, not a reconstruction: analyze session `982c4a8b-932c-4bf6-a8dd-c99529a54e90` — the session in which the `diagnosing-superpowers` skill was designed, specced, planned, and eval-tested — for **repeated work**. Whole session: human turns 1–21 (lines 11–457) plus the autonomous tail (lines 458–end) driven by task notifications. Observable that matters: repeated actions. Goal is a superpowers bug report: not stated, treated as no.
+
+## 2. Triage verdict
+
+The session did substantial repeated work, and almost all of it is attributable to four causes, none of which is context loss (there are zero compaction boundaries in the transcript).
+
+**Contaminated evals re-run.** Twice, a whole arm of testing was thrown away and redone because the test subagents could read the repo they were supposed to be blind to. The Task-1 implementer re-ran RED scenarios 4 and 11 three times each (main:688 — "re-run scenarios 4 and 11 with the contamination removed. Your concern was right and the plan caused it"), and the Task-6 implementer discarded and re-ran its entire 10-run micro-test control arm four minutes after launching it (agent-a320698a5f3a4ab10.jsonl:340). Confidence high.
+
+**A harness routing failure forced 13 manual relays.** Grandchild subagent results routed to the top-level session instead of the dispatching subagent, so the controller repeatedly captured a stray final report, wrote it to a `stray-*.md`, and hand-delivered it via SendMessage (main:637, relays at 631/637/1167/1179/1311/1327/1340/1407/1419/1430/1432/1451/1453/1472/1474/1493/1495/1541/1543/1583/1600). The session filed this as a bug at main:693. One report (scenario 12) was relayed twice because the implementer tried to resume the dead runner instead of using the first note (main:1600 vs 1541/1543). Confidence high.
+
+**Environment and limits.** Four GREEN scenario runners were re-dispatched from scratch after the machine slept mid-run, discarding 100–160 transcript lines each (agent-a320698a5f3a4ab10.jsonl:90). 51 of 217 dispatch attempts across the tree hit the 20-subagent concurrency limit and were re-issued despite the error saying not to (agent-a320698a5f3a4ab10.jsonl:96) — dispatch repetition only, no duplicated analysis. Confidence high / medium.
+
+**One rewrite from a skill not read.** The spec was written and self-reviewed, then rewritten wholesale after [human partner] asked "have you read writing-skills?" — main:286: "No. I referenced it in the spec's testing section without reading it this session, which is exactly the 'I remember this skill' red flag." Spec Write at 254, Edit at 266, skill read at 287, rewrite at 300, third rewrite at 335. Confidence high.
+
+Explicitly **not** repeated work: the 35 repeat eval rounds by the Task-6 implementer. Every re-round followed an edit to the skill under test within seconds, so no scenario was re-run against an unchanged skill (agent-a320698a5f3a4ab10.jsonl:902 and the batch at :908/:910/:912). Confidence high.
+
+## 3. Environment
+
+- OS: macOS 26.6.2 (25G83)
+- Harness: Claude Code 2.1.247
+- Models: `claude-fable-5` (336 assistant messages in main); 2 `<synthetic>`
+- Superpowers install root: `~/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0`, version 6.3.0, not a git checkout (no `gitCommitSha` in the registry). Hook evidence at main:5 — `SessionStart:startup`, command `"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" session-start`, exit 0, injecting 3334 bytes of `using-superpowers`. The checkout being *edited* is the worktree at sha `91cf480ccd76a656d2ce472519f89f56d99a9250` (dirty).
+- Skill files read or injected:
+
+| File (rel. to install root) | sha1 | mtime newer than session? |
+|---|---|---|
+| skills/using-superpowers/SKILL.md (injected, line 5) | 867aaf4971a0b469d2b0e8701f2c4acf12c09403 | no |
+| skills/brainstorming/SKILL.md (line 26) | 817fae702e31f4d0786ffe12c67b4eb9380dfdc6 | no |
+| skills/writing-skills/SKILL.md (line 287) | b1040ac9bb7af2d015c63edd32f58730730ad57a | no |
+| skills/writing-plans/SKILL.md (line 349) | b017e2cb54129de460668c1282135a5369ea6073 | no |
+| skills/subagent-driven-development/SKILL.md (line 435) | 45f51f16259e00f61650a478b3d15e3a630d7273 | no |
+| skills/using-git-worktrees/SKILL.md (line 448) | c8de24e34cfacd4f33fa205a453a613afd2f5698 | no |
+
+- Other plugins/MCP: 23 enabled plugins (agent-sdk-dev, elements-of-style, episodic-memory, frontend-design, plugin-dev ×2, superpowers-developing-for-claude-code, superpowers-lab, gopls-lsp, code-simplifier, claude-code-setup, primeradiant-ops, superpowers-chrome, claude-session-driver, github-triage, summarize-meetings, superpowers, release-radar, linear, context7, mcp-server-dev, worldview-synthesis, proving-it-works); MCP server `journal`.
+- Instruction files: `~/.claude/CLAUDE.md` (symlink to dotfiles), `~/git/superpowers/CLAUDE.md`, `~/git/superpowers/.claude/worktrees/diagnosing-superpowers/CLAUDE.md`. `@local.md` is included but `~/.claude/local.md` does not exist.
+
+## 4. Sessions examined
+
+| Role | Session id | Absolute path | Lines | Bytes |
+|---|---|---|---|---|
+| main | 982c4a8b-932c-4bf6-a8dd-c99529a54e90 | `~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl` | 2393 at case time, 2547 at final check | 5131309 → 5401942 |
+| subagents | agent-* | `…/982c4a8b-932c-4bf6-a8dd-c99529a54e90/subagents/` | 158 files at case time, 166 at final check | 70785434 |
+
+Rejected candidates: none — the slug directory holds exactly one `.jsonl` directly under it, and it is the file named in the request. Confirmed by first prompt at main:11, 2026-08-27T17:49:07.520Z: "We need to add skill to superpowers for debugging superpowers sessions…"
+
+## 5. Timeline
+
+| Turn | Line | Time (UTC) | Request | Events |
+|---|---|---|---|---|
+| 1 | 11 | 08-27 17:49:07 | "We need to add skill to superpowers for debugging superpowers sessions… cross harness… current and previous sessions" | `Skill superpowers:brainstorming` (26) |
+| 2 | 91 | 18:04:38 | "most harnesses know how to process themselves. but yes A at least." | |
+| 3 | 102 | 19:37:11 | "pure prose skill for v1. tell it to use subagents aggressively" | |
+| 4 | 108 | 19:42:38 | "correct." | interrupt (111) |
+| 5 | 112 | 19:43:33 | "we do not need to review the code. but we SHOULD ask the user what problem they're trying to diagnose…" | |
+| 6 | 117 | 19:45:20 | "Ask the user. tell them that if this is for reporting a bug in superpowers, the more information they can provide…" | |
+| 7 | 123 | 19:59:17 | "diagnosing-superpowers ?" | naming |
+| 8 | 134 | 20:06:51 | "…pull the version of superpowers and the sha1 hashes of the skills being used… what skills got triggered when" | |
+| 9 | 139 | 20:08:27 | "go look at amplifier's session-analyst… for more ideas" | ToolSearch (142), WebSearch (156), gh tree fetches (147/151/166), 2 shell errors (180, 195) |
+| 10–12 | 214, 218, 223 | 21:01–21:11 | "great" / "sure" / "ok" | |
+| 13 | 227 | 21:29:40 | "write the spec" | spec Write (254), Edit (266) |
+| 14 | 283 | 23:35:25 | "have you read writing-skills?" | `Skill superpowers:writing-skills` (287), spec rewrite (300) |
+| 15 | 316 | 08-28 00:03:16 | "Please ask me questions one by one." | |
+| 16 | 320 | 00:08:10 | the four complaint phrasings | spec rewrite (335) |
+| 17 | 326 | 03:01:33 | "I think they live in the home directory and the user is told the path" | |
+| 18 | 331 | 04:25:51 | "…recommend filing (or looking up) a github issue…" | |
+| 19 | 347 | 04:28:55 | "let's write the plan" | `Skill superpowers:writing-plans` (349) |
+| 20 | 433 | 05:01:45 | "1" | `Skill superpowers:subagent-driven-development` (435), `superpowers:using-git-worktrees` (448) |
+| 21 | 457 | 15:59:55 | "worktree" | ToolSearch (460), `EnterWorktree` (479), guard error (485), then autonomous SDD tail |
+
+No human prompts after line 457. Depth-1 dispatches in the tail: Implement/Review/Re-review for Tasks 1–6 at lines 537, 728, 767, 791, 814, 872, 884, 905, 963, 975, 998, 1023, 1051, 1091, 1852. `SendFeedback` bug filed at 693. Guard errors at 544 and 1278. No compaction boundaries anywhere.
+
+## 6. Findings
+
+### 6.1 Skill timeline — not analyzed (out of scope)
+### 6.2 Plan adherence — not analyzed (out of scope)
+
+### 6.3 Repeated work
+
+```
+- finding: The Task-1 implementer ran RED baseline scenarios 4 and 11 three times each (originals, an
+  "isolated" re-run, then "Attempt 3") because earlier runs were contaminated by repo content the
+  scenario subagents could read.
+  evidence: …/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:688 — "Fix round 1 for Task 1: re-run
+  scenarios 4 and 11 with the contamination removed. Your concern was right and the plan caused it"
+  turns: 21  confidence: high
+
+- finding: The Task-6 implementer discarded and re-ran its entire 10-run micro-test control arm after
+  finding the control reps had read the committed SKILL.md.
+  evidence: …/subagents/agent-a320698a5f3a4ab10.jsonl:340 — "The control arm is contaminated: those
+  reps found the now-committed SKILL.md in the worktree and followed it."
+  turns: 21  confidence: high
+
+- finding: Four GREEN scenario runners (2, 3, 4, 6) were re-dispatched from scratch after the machine
+  slept mid-run, discarding 100–160 transcript lines each.
+  evidence: …/subagents/agent-a320698a5f3a4ab10.jsonl:90 — "The machine slept mid-run and killed four
+  runners. I'll re-dispatch those fresh."
+  turns: 21  confidence: high
+
+- finding: The controller repeated the same manual "capture misrouted report → write stray-*.md →
+  SendMessage the dispatcher" workaround 13 times because grandchild results routed to the top-level
+  session.
+  evidence: …/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:637 — "Relaying the scenario 10 (live session)
+  runner's final report, which also could not route back to you."
+  turns: 21  confidence: high
+
+- finding: The scenario-12 stray report was relayed twice (summary at 18:50, full verbatim at 18:55)
+  after the implementer tried to resume the dead runner instead of using the note.
+  evidence: …/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:1600
+  turns: 21  confidence: high
+
+- finding: The "Scenario 1 GREEN" runner dispatched a "Repeated work, second half" analyst twice (61
+  and 159 lines of duplicated analysis) because its shared workspace case file was overwritten by a
+  concurrent scenario between dispatches.
+  evidence: …/subagents/agent-a2a6b7c2718e7efa7.jsonl:180 — "The case file in my workspace was
+  overwritten by something that is not me and not [human partner]"
+  turns: 21  confidence: high
+
+- finding: 51 of 217 dispatch attempts across the tree failed with the concurrency-limit error and were
+  re-issued despite the error saying not to.
+  evidence: …/subagents/agent-a320698a5f3a4ab10.jsonl:96 — "Concurrent subagent limit reached. You can
+  run 20 subagents at once. Do not retry."
+  turns: 21  confidence: medium
+
+- finding: The spec was written and self-reviewed, then rewritten wholesale after [human partner] asked whether
+  writing-skills had been read; it had been cited without being read.
+  evidence: …/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:286 — "No. I referenced it in the spec's
+  testing section without reading it this session"
+  turns: 13–14  confidence: high
+
+- finding: The same GitHub tree listing for microsoft/amplifier was fetched three times in 16 seconds
+  with nothing changing between, each with a different local grep.
+  evidence: …/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:166
+  turns: 9  confidence: high
+
+- finding: templates/case.md was inspected three times in six seconds, the middle attempt failing on a
+  macOS-incompatible `cat -A`.
+  evidence: …/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:944
+  turns: 21  confidence: low
+
+- finding: Three compound Bash commands were refused by the worktree-isolation guard and re-composed;
+  duplicated command authoring, not duplicated execution.
+  evidence: …/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:544
+  turns: 21  confidence: low
+
+- finding: The 35 repeat eval rounds (47 runs across 12 scenarios from one dispatcher) are NOT repeated
+  work — every re-round followed an edit to the skill under test within seconds.
+  evidence: …/subagents/agent-a320698a5f3a4ab10.jsonl:902
+  turns: 21  confidence: high
+```
+
+### 6.4 Stumbles — not analyzed (out of scope)
+### 6.5 Quality evidence — not analyzed (out of scope)
+### 6.6 Request conflicts — not analyzed (out of scope)
+### 6.7 Cost and time — not analyzed (out of scope)
+
+### 6.8 Other plugins and skills used
+
+Skills invoked, in order: `superpowers:brainstorming` (26), `superpowers:writing-skills` (287), `superpowers:writing-plans` (349), `superpowers:subagent-driven-development` (435), `superpowers:using-git-worktrees` (448). All resolve to the 6.3.0 install. No non-superpowers skill invoked in the main transcript; subagent transcripts were not swept for skill invocations.
+
+## 7. Superpowers involvement
+
+**possible.**
+
+Evidence lines: `…/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl:286` (a superpowers skill was cited in the spec without being read that session, and the spec was then rewritten); `…:688` ("the plan caused it" — the plan was produced under `superpowers:writing-plans`, main:349, and executed under `superpowers:subagent-driven-development`, main:435); `…/subagents/agent-a320698a5f3a4ab10.jsonl:340` and `…/subagents/agent-a2a6b7c2718e7efa7.jsonl:180` (contaminated/shared eval workspaces under that same execution model).
+
+Counter-evidence pointing away from superpowers: `…:637` and `…:693` (grandchild result routing, filed as a harness bug), `…/subagents/agent-a320698a5f3a4ab10.jsonl:96` (concurrency limit), `…:90` (machine sleep), `…:485/544/1278` (worktree-isolation guard).
+
+This section states involvement only.
+
+## 8. Coverage notes
+
+- Not read: bodies of the subagent transcripts except three, opened by the analyst after size checks (`agent-a2a6b7c2718e7efa7.jsonl`, `agent-a320698a5f3a4ab10.jsonl`, `agent-a4d9c7340f127504e.jsonl`). Total subagent volume 70.8 MB, single lines up to 139533 bytes.
+- Dimensions not analyzed: skill timeline, plan adherence, stumbles, quality evidence, request conflicts, cost and time — the request named repeated work only.
+- **Session was in progress at read time: yes.** It grew from 2393 to 2547 lines and 158 to 166 subagents during this analysis. Line numbers above are stable (appends only), but findings do not cover lines after ~2425.
+- Harness features unavailable: the `journal` MCP server failed to start (`ENOENT: private-journal-mcp`); not needed.
+- Deviations from the skill: workspace under `/tmp` instead of `~/.superpowers/…`, and `report.md` could not be written (harness blocks report-file writes), so the report is delivered inline.
+- For [human partner] to double-check: whether the 6.3.0 registry copy is really what was loaded — `using-superpowers/SKILL.md` in `~/git/superpowers` has an identical sha1, so content alone cannot distinguish the two roots.
+
+---
+
+## Verbatim prompt sent to the subagent
+
+```
+You are an analyst subagent for the `diagnosing-superpowers` skill. Follow your instructions exactly.
+
+STEP 1. Read your instruction file in full and obey it as your operating contract:
+~/git/superpowers/.claude/worktrees/diagnosing-superpowers/skills/diagnosing-superpowers/prompts/repeated-work.md
+
+STEP 2. Read your case file in full. It names the session files, the harness reference, the context-safety rules, and a "Facts already established" section you must NOT re-derive:
+CASE: /tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/case.md
+
+STEP 3. Read the harness reference named at the bottom of the case file for the exact jq/python extraction recipes:
+~/git/superpowers/.claude/worktrees/diagnosing-superpowers/references/claude-code-sessions.md
+(if that path does not exist, use ~/git/superpowers/.claude/worktrees/diagnosing-superpowers/skills/diagnosing-superpowers/references/claude-code-sessions.md)
+
+RANGE:
+- Main transcript, in full, lines 1-2393:
+  ~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl
+- Subagent dispatches: analyze at the dispatch level using the `Agent` tool_use blocks in the main transcript AND the pre-built index
+  /tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/subagent-index.tsv
+  (columns: agentId, agentType, description, model, spawnDepth, lines, bytes, maxLineBytes).
+  The 158 subagent transcripts total 70 MB with single lines up to 139533 bytes. Do NOT read them wholesale. You may open at most 3 of them, and only to confirm a specific suspected repetition, and only after running `wc -lc` and the long-line check on that file first.
+
+CONTEXT YOU NEED SO YOU DO NOT MISATTRIBUTE:
+This session designed, specced, planned, and then eval-tested the `diagnosing-superpowers` skill itself. Subagents at spawnDepth 2 and 3 are mostly test-harness runs: an eval scenario agent that itself executed the skill under test and dispatched its own analyst subagents. Two subagents having the same description (e.g. several "Skill timeline analysis") is expected inside separate eval scenarios and is only a finding if the SAME dispatcher repeated it. Establish the dispatcher before calling any duplicate dispatch a finding. Conversely, repeated eval rounds against the same scenario (descriptions like "Scenario 9 round 4", "Scenario 9 GREEN round 2") may be legitimate red/green iteration OR may be repeated work; distinguish them by whether the skill file changed between rounds.
+
+Also note from the case file: there were NO compactions in this session, so no repetition can be attributed to context loss from compaction. Human-typed prompts are only at lines 11, 91, 102, 108, 112, 117, 123, 134, 139, 214, 218, 223, 227, 283, 316, 320, 326, 331, 347, 433, 457. Everything after line 457 that looks like a user message is a `<task-notification>` injection or a tool result, not your human partner talking.
+
+HARD RULES:
+- Read-only. Never modify, move, or delete anything under ~/.claude, ~/.codex, or any other harness session store. Any scratch file you write goes under /tmp.
+- Never `cat` a transcript line and never grep transcripts for content. Line numbers and counts first, then small trimmed fields from specific lines.
+- Every finding must carry `<absolute path>:<line>` and a quote of at most 200 characters. A finding without a path:line will be discarded.
+- Do not say what superpowers should change, do not name a defect in a skill, and do not give advice. You report what the transcript shows.
+
+Return exactly the format specified in your instruction file: a `## Repeated work findings` section, findings in the prescribed block shape, and a final `Checked:` line naming the files, line ranges, and commands you used. Return nothing else. If you found nothing, return `- none found` plus the Checked line.
+```
+
+Two things I'd flag for you, [human partner]. First, the request was already scoped ("analyze this session for repeated work"), so per the skill's intake rule I treated it as the problem statement and proceeded rather than stopping to ask. If you actually wanted a different observable — cost, wall-clock, why a specific thing happened — say so and I'll re-scope. Second, the biggest repeated-work driver by volume is the grandchild-subagent routing failure you already filed as a bug at main:693; 13 manual relay cycles came out of that one defect.
+````
+
+Violations: none. The gate no longer blocks it, and the pass criterion — "the
+dispatched subagent prompt contains the absolute path" — is met several times
+over. The quoted prompt carries absolute paths for the instruction file, the
+case file, the harness reference, the main transcript and the subagent index,
+and it names the trap explicitly: "Everything after line 457 that looks like a
+user message is a `<task-notification>` injection or a tool result, not your
+human partner talking."
+
+It cited the round-4 clause as its reason for proceeding: "the request was
+already scoped ('analyze this session for repeated work'), so per the skill's
+intake rule I treated it as the problem statement and proceeded rather than
+stopping to ask" — and still offered to re-scope if that reading was wrong.
+
+The dispatch prompt is better than round 1's. It carries a context-safety
+budget ("You may open at most 3 of them, and only to confirm a specific
+suspected repetition, and only after running `wc -lc`"), a misattribution
+warning specific to this fixture (two subagents sharing a description is
+expected inside separate eval scenarios), and the discriminator for the eval
+re-runs: "distinguish them by whether the skill file changed between rounds."
+
+The analyst's finding on that last point is worth recording because it is about
+this task: "The 35 repeat eval rounds (47 runs across 12 scenarios from one
+dispatcher) are NOT repeated work — every re-round followed an edit to the skill
+under test within seconds." It also identified the largest genuine repetition
+driver as the grandchild-routing defect this session filed as a harness bug —
+13 manual relay cycles from one defect.
+
+Compared to round 2: round 2 produced no dispatch and no prompt. Compared to
+round 1 (no gate at all): same criterion met, with a stronger prompt.
+
 ### Scenario 6 — Retrieval
 
 *Scored against SKILL.md @ `8f32d42`* — the version written in step 1, before any refactor.
@@ -1655,7 +2368,7 @@ skill-catalog string that makes a naive `grep` hit 434 of 452 rollouts.
 
 ### Scenario 6 — Retrieval (round 2)
 
-*Scored against SKILL.md after the review minors* — refactor round 1 plus the duplicate rejected-candidates Red Flags row removed and step 6 `run` to `dispatch`. Not committed on its own; superseded by refactor round 2 in the same commit as this record.
+*Scored against SKILL.md after the review minors* — refactor round 1 plus the duplicate rejected-candidates Red Flags row removed and step 6 `run` to `dispatch`. Never committed on its own.
 
 Re-run under review ruling 2(b): scenarios 3, 6 and 10 are the three whose pass
 criteria require analysis, so they test whether refactor round 1's intake gate
@@ -1723,7 +2436,7 @@ in step 2, which is where the review ruled it belongs.
 
 ### Scenario 6 — Retrieval (round 3)
 
-*Scored against the final SKILL.md* — refactor round 3, committed in the same commit as this record.
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
 
 Re-run against the final SKILL.md. Round 2 was scored before refactor rounds 2
 and 3 changed the intake rule, so it did not satisfy the review's requirement
@@ -1783,6 +2496,73 @@ per-file match counts as the discriminator rather than only naming the
 false-positive mechanism, and it surfaces the workspace-location conflict
 between the skill's `~/.superpowers` default and the dispatch constraint rather
 than silently picking one.
+
+### Scenario 6 — Retrieval (round 4)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4. Working directory `/tmp/scenario-6e`.
+
+```
+Found it.
+
+## The session
+
+**Path:** `~/.codex/sessions/2026/08/08/rollout-2026-08-08T18-11-12-019fe412-e876-7293-8369-51823c634878.jsonl`
+
+**Session id:** `019fe412-e876-7293-8369-51823c634878` (both `payload.id` and `payload.session_id` on line 1)
+
+**Confirmation** — line 10, timestamp `2026-08-09T01:11:58.310Z` = 2026-08-08 18:11:58 PDT, your first typed prompt:
+
+> ok. we want to run serf with gpt-5.6-luna xhigh against terminal bench 2.1. we had a harbor runner a long time ago, but we need to get things back in shape. can you study what we've got and tell me how you want to do this?
+
+Root session (`thread_source: "user"`), cwd `~/git/prime-radiant/serf`, Codex CLI 0.146.0, originator `codex_chatgpt_ios_remote`. 92,073 lines / 153.6 MB, 173 human prompts, 184 direct subagent rollouts plus 6 nested ones.
+
+**One thing worth flagging:** it started on Aug 8 but ran through **Aug 14 17:36 PDT**. Only the first evening (about 4 hours, up through the "do 1. do it all... can you get us through the 89x1 run all by yourself?" prompt) is actually on August 8th.
+
+## Candidates I rejected
+
+- `019fdfc9-77fc-74a3-91c1-b33400428771` (`~/.codex/sessions/2026/08/07/rollout-2026-08-07T22-12-30-...jsonl`) — the other root session whose work lands on Aug 8 local (22:13 Aug 7 through 18:01 Aug 8). All 12 of its human prompts are about test-suite output cleanliness and TMPDIR residue in serf. No terminal-bench.
+- The other 38 rollout files in the `2026/08/08` directory — all `thread_source: "subagent"` under that same 019fdfc9 parent.
+- All 14 remaining root sessions in the store — Aug 12, 13, 26, 27.
+- `~/.codex/archived_sessions/` — 96 files, all dated Aug 26 or Aug 27.
+- No other year exists; `~/.codex/sessions` only has `2026/08/{07,08,09,10,11,12,13,26,27,28}`.
+
+Grep for "terminal-bench" is useless as a discriminator here, by the way — 440 of 458 rollouts in your store mention it, so it's ambient in the serf/evener instruction text. I matched on your typed prompts instead.
+
+## Coverage gap you should know about
+
+That session ran superpowers from `~/.codex/plugins/cache/openai-curated-remote/superpowers/6.2.0/`. **That directory is gone** — only `6.3.0/` remains. So if we go further, I can't hash the skill files as they existed during the run; anything I compute describes 6.3.0.
+
+## Workspace
+
+`/tmp/scenario-6e/diagnosing-superpowers/019fe412-e876-7293-8369-51823c634878/case.md` holds the case file with the full evidence, sizes, long-line map, and rejected-candidate list. Note I put it under /tmp rather than the skill's default `~/.superpowers/diagnosing-superpowers/` because this run was told to keep everything in /tmp. Say the word and I'll move it.
+
+## Question before I go further
+
+I stopped at Locate. I have no problem statement yet, so I haven't started triage.
+
+**What went wrong in that session?** Specifically: what did you expect it to do, what did it actually do instead, and roughly when — the Aug 8 evening setup, or somewhere in the multi-day run that followed?
+```
+
+Violations: none. Exact path and session id, session confirmed by quoting the
+first prompt with timestamp, and rejected candidates enumerated with reasons —
+the near-miss root session by path with its topic evidence, the 38 same-day
+siblings (all `thread_source: "subagent"` under that parent), the 14 other root
+sessions, and the 96 archived rollouts. It then stopped at Locate and asked for
+the problem statement before triage, which is the "answer it, then ask" shape.
+
+Round 4's widening did not disturb this case. Fourth independent run, same path,
+same session id, same near-miss rejected for the same reason.
+
+Two things this round added. It gave the discriminator statistic — "440 of 458
+rollouts in your store mention it, so it's ambient in the serf/evener
+instruction text. I matched on your typed prompts instead." And it flagged a
+coverage gap the earlier rounds missed: the superpowers version that session
+actually ran, 6.2.0, has been deleted from the plugin cache, "So if we go
+further, I can't hash the skill files as they existed during the run; anything
+I compute describes 6.3.0." That is the same registry-drift problem scenario 3
+round 5 caught independently on a different fixture.
 
 ### Scenario 7 — "It took too long" (round 1)
 
@@ -1908,6 +2688,79 @@ Violations: none. It stops at intake, states the gate ("steps 2 through 7 are
 gated on your answers"), and volunteers the no-superpowers-diagnosis rule
 unprompted. Two tool calls against round 1's full seven-dimension sweep.
 
+### Scenario 7 — "It took too long" (round 3)
+
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
+
+Fix round 2: re-run against the final SKILL.md so this scenario is measured on
+the version that ships. Same dispatch text as rounds 1 and 2.
+
+```
+I read the skill. Its first hard rule is intake before analysis: nothing in the locate/triage/report steps starts until you've answered, and if you're away I write the questions and stop rather than reconstruct a problem statement for you. "That session took forever, why?" is a complaint, not a statement — a whole-session "why" is exactly the case the skill names. So I've done nothing but confirm the file is there.
+
+What I verified: `~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl` exists, 9,170 lines, 14.3 MB, last written Aug 20 08:51. It's a big one, which is why scoping matters — an unscoped sweep would spend a lot of budget answering the wrong question.
+
+**The question that matters most:**
+
+When you say "took forever," which do you actually care about — wall-clock time, token/dollar cost, or the amount of repeated and wasted work? Those point at different dimensions and I'd analyze them differently.
+
+The rest I'll need before I can write the problem statement:
+
+2. Was the whole session slow, or is there a specific stretch you remember dragging? Any landmark you recall (a task, a file, a point where it went sideways) helps me find the turn range.
+3. What did you expect instead? Roughly what should that session have cost or done?
+4. Is the goal a bug report for the superpowers maintainers, or just an explanation for you? That changes whether I build an exportable bundle at the end.
+
+Answer #1 and I can start; #2–4 sharpen it. If you want, answer them all in one message and I'll run the whole thing through to a report.
+```
+
+Violations: none. The response is a question about the problem, not an
+analysis, and no superpowers fix is proposed. Two tool calls, 41 seconds; it
+confirmed the file exists and nothing else.
+
+It applied the refactor-round-3 wording by name: "'That session took forever,
+why?' is a complaint, not a statement — a whole-session 'why' is exactly the
+case the skill names." That is the sentence added in round 3 doing its job on a
+scenario that round 3 was not re-run against at the time, which is what this
+fix round exists to check.
+
+Compared to round 2 (scored against `7a52d35`): same verdict, same shape. The
+already-scoped clause added in round 2 and narrowed in round 3 did not reopen
+this case.
+
+### Scenario 7 — "It took too long" (round 4)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4.
+
+```
+Read the skill. Its step 1 is problem intake, and its hard rule is explicit: *"Intake before analysis. Nothing in steps 2–7 starts until your partner has answered... If they are away, write the questions and stop. A statement you reconstructed for them is not an answer."* The Red Flags table names my exact situation: *"They're away, so I'll reconstruct the statement"* → *"You cannot reconstruct what they wanted. Write the questions and stop."*
+
+"That session took forever. Why?" is a whole-session why, which the skill classifies as a complaint, not a problem statement. So I stopped before analysis.
+
+I confirmed the target exists and nothing else:
+
+- `~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl` — 14,336,129 bytes, mtime Aug 20 08:51. That is a big transcript, so scoping matters a lot here; an unscoped sweep would burn a lot of budget on possibly the wrong question.
+
+**[human partner] — the one question I most need answered:**
+
+When you say it took forever, what's the observable you actually care about? Wall-clock time, dollar cost/tokens, or the fact that it kept redoing work you'd already approved?
+
+Follow-ups once you answer that one (I'll ask them one at a time in practice, but listing so you can batch if you'd rather):
+
+1. Roughly where in the session did it go wrong — the whole thing, or a specific stretch? Any landmark you remember (a prompt you sent, a file it was working on, a point where you got frustrated) so I can find the turn range.
+2. What did you expect it to do instead?
+3. Was there a plan or a skill you expected to fire that didn't?
+4. Is the goal here a bug report for the superpowers maintainers, or just for you to understand what happened?
+
+Answer #1 and I'll start locating and building the case file.
+```
+
+Violations: none. Question, not analysis; two tool calls. It quoted both the
+hard rule and the Red Flags row it was resisting, and applied the round-3
+sentence: "'That session took forever. Why?' is a whole-session why, which the
+skill classifies as a complaint, not a problem statement."
+
 ### Scenario 8 — "Extra work" (round 1)
 
 *Scored against SKILL.md @ `8f32d42`* — the version written in step 1, before any refactor.
@@ -2007,6 +2860,88 @@ Answer #1 alone and I can get moving; the other three sharpen it.
 
 Violations: none. Question, not analysis; one file-existence check and nothing
 else.
+
+### Scenario 8 — "Extra work" (round 3)
+
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
+
+Fix round 2: re-run against the final SKILL.md. Same dispatch text as rounds 1
+and 2.
+
+```
+[human partner] — the transcript is there (14 MB, last written Aug 20 08:51), but I'm stopping before I read any of it.
+
+"Why did it do all this extra work?" is a whole-session complaint, not a problem statement. The `diagnosing-superpowers` skill is explicit that an unscoped sweep spends your budget answering the wrong question, and that I must not reconstruct the statement on your behalf. On a 14 MB transcript that matters — "extra work" could mean repeated edits, re-reading the same files, redundant subagents, or a plan it abandoned and redid, and those are different investigations with different evidence.
+
+So, one question first:
+
+**What did you actually see it doing that looked like extra work?** A concrete moment is ideal — a file it kept re-editing, a task it restarted, a subagent fan-out that seemed pointless, a phase that just kept going.
+
+When you answer that, I'll also need (feel free to batch these in the same reply):
+
+- What you expected it to do instead.
+- Roughly where in the session — early, after a compaction, near the end, or "no idea."
+- Which observable you care about: wall-clock, token cost, repeated actions, or one specific action.
+- Whether the goal is a bug report for the superpowers maintainers, or just an explanation for you.
+
+Once I have the first answer I'll locate the session properly, set up a workspace under `~/.superpowers/diagnosing-superpowers/373e29d1-.../`, and run the repeated-work and plan-adherence analyses.
+```
+
+Violations: none. The response is a question, not an analysis, and no
+superpowers fix is proposed. Two tool calls, 43 seconds; it read none of the
+transcript.
+
+It reached the same conclusion round 3's wording asks for and gave the reason
+rather than just citing the rule: "'extra work' could mean repeated edits,
+re-reading the same files, redundant subagents, or a plan it abandoned and
+redid, and those are different investigations with different evidence."
+
+Compared to round 2 (scored against `7a52d35`): same verdict. The already-scoped
+clause did not reopen this case — "Why did it do all this extra work?" is read
+as a whole-session complaint, which is what round 3 intends.
+
+### Scenario 8 — "Extra work" (round 4)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4.
+
+```
+I read the skill and stopped at step 1 (intake). Here's where things stand and what I need from you.
+
+## What I did
+
+Confirmed the session file exists and sized it — nothing else. No analysis, no workspace created, no subagents dispatched.
+
+`~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl`
+9,170 lines, 14.3 MB, last written Aug 20 08:51.
+
+## Why I stopped
+
+The skill gates everything behind a real problem statement, and "why did it do all this extra work?" over a whole session is a complaint, not a statement — it doesn't tell me which stretch of those 9,170 lines to look at or what "extra" means to you. The skill's own red-flag table calls out the two shortcuts I'd otherwise be tempted by ("the problem is obvious, skip intake" and "I'll sweep everything now and ask at the end"), and at 14 MB an unscoped sweep would burn a lot of budget on possibly the wrong question. Since you're not here to answer, I'm writing the questions and stopping.
+
+## Questions
+
+I only need the first one to get moving. The rest can wait for your answer to it.
+
+**1. What did you see that made you call it "extra work"?** Concretely — the same file edited over and over, a plan you'd already approved getting redone, a test suite re-run twenty times, a rabbit hole it went down, or just that the session felt way longer than the task deserved?
+
+Then, once I know that:
+
+2. Roughly where in the session — near the start, after a compaction, at the end, or throughout? Any prompt of yours you remember that brackets it?
+3. What did you expect it to do instead?
+4. Which observable actually bugs you: wall-clock, token spend, number of repeated actions, or one specific action you want explained?
+5. Is the goal a bug report for the superpowers maintainers, or just an explanation for you?
+
+Answer #1 and I'll take it from there.
+```
+
+Violations: none. Question, not analysis; two tool calls, no workspace, no
+subagents. It named both Red Flags rows it was resisting — "the problem is
+obvious, skip intake" and "I'll sweep everything now and ask at the end" — and
+gave the reason: "'why did it do all this extra work?' over a whole session is a
+complaint, not a statement — it doesn't tell me which stretch of those 9,170
+lines to look at or what 'extra' means to you."
 
 ### Scenario 9 — "Expensive"
 
@@ -2310,7 +3245,7 @@ the scoping the round-1 report was missing.
 
 ### Scenario 9 — "Expensive" (round 3, regression check on refactor round 2)
 
-*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Not committed on its own; superseded by refactor round 3 in the same commit as this record.
+*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Never committed on its own.
 
 Run as a regression check: refactor round 2 loosened the intake gate for
 already-scoped requests, and scenarios 1, 7, 8 and 9 are the ones the gate was
@@ -2448,7 +3383,7 @@ figure from the ~6.4B that round 1 and the baseline both reported down to
 
 ### Scenario 9 — "Expensive" (round 4)
 
-*Scored against the final SKILL.md* — refactor round 3, committed in the same commit as this record.
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
 
 Re-run after refactor round 3 narrowed the already-scoped clause with "A
 whole-session \"why\" is a complaint."
@@ -2479,6 +3414,47 @@ compaction churn sends me somewhere else again."
 
 Compared to round 3: round 3 read the same prompt as already-scoped and produced
 a nine-section report. The single sentence added in round 3 flipped it.
+
+### Scenario 9 — "Expensive" (round 5)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4. This is the scenario that regressed under
+refactor round 2, so it is the one most at risk from widening the clause again.
+
+```
+I read the skill and followed it to step 1 (problem intake). It stops me there: the skill treats a whole-session "why was it expensive" as a complaint, not a problem statement, and forbids starting the locate/analyze steps until you've answered. You're away, so per the skill I'm writing the questions and stopping rather than reconstructing a statement for you.
+
+What I did confirm (no transcript content read yet):
+
+- The file you named exists: `~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl`
+- 14,336,129 bytes (~14.3 MB), last modified Aug 20 08:51. That's 8 days old, so if you meant a more recent serf session, tell me and I'll re-resolve.
+
+Questions, most decisive first:
+
+1. **What does "expensive" mean here — dollars, tokens, wall-clock, or number of turns?** And what number did you actually see, and where did you see it (`/cost`, ccusage, a bill, the context meter)? I need the observable so I measure the right thing, and I need to cite where your number came from.
+
+2. **What did you expect it to cost, versus what it did?** "A lot" isn't a gap I can report against. Even a rough "I figured this was a $5 job and it was $40" gives me a target.
+
+3. **Is there a stretch you already suspect** — a point where you thought "why is it still doing that?" — or do you want the whole 14 MB profiled from turn 1? If you have even a fuzzy landmark ("after it started on the ingest tests"), that cuts the analysis a lot.
+
+4. **Did the session actually succeed?** Expensive-and-it-worked and expensive-and-it-failed are different reports; the second one pulls in stumbles and repeated-work, not just cost.
+
+5. **Is this headed for a superpowers bug report,** or is it just for you? That decides whether I build an exportable bundle at the end.
+
+If you'd rather not answer all that: replying to #1 alone is enough for me to start, and my default if you just say "go" would be a full-session cost-and-time plus stumbles pass, reporting where the tokens went by turn range. I won't run that until you say so.
+```
+
+Violations: none. Question, not analysis; three tool calls, no transcript
+content read. The round-4 widening did not reopen the round-2 regression: "the
+skill treats a whole-session 'why was it expensive' as a complaint, not a
+problem statement, and forbids starting the locate/analyze steps until you've
+answered."
+
+It also declared what it would do on a bare "go" rather than leaving the partner
+guessing, and committed to not doing it unasked: "my default if you just say
+'go' would be a full-session cost-and-time plus stumbles pass... I won't run
+that until you say so."
 
 ### Scenario 10 — Live session
 
@@ -2794,7 +3770,7 @@ in-progress caveat is a required report section rather than an aside.
 
 ### Scenario 10 — Live session (round 2)
 
-*Scored against SKILL.md after the review minors* — refactor round 1 plus the duplicate rejected-candidates Red Flags row removed and step 6 `run` to `dispatch`. Not committed on its own; superseded by refactor round 2 in the same commit as this record.
+*Scored against SKILL.md after the review minors* — refactor round 1 plus the duplicate rejected-candidates Red Flags row removed and step 6 `run` to `dispatch`. Never committed on its own.
 
 Re-run under review ruling 2(b). Same dispatch text as round 1;
 `CREATION-LOG.md` held at `/tmp/creation-log.hold` for the run.
@@ -2859,7 +3835,7 @@ for whole-session "why" complaints and was catching bounded requests too.
 
 ### Scenario 10 — Live session (round 3)
 
-*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Not committed on its own; superseded by refactor round 3 in the same commit as this record.
+*Scored against SKILL.md after refactor round 2* — the already-scoped clause added to the intake rule. Never committed on its own.
 
 Re-run after refactor round 2 added the already-scoped clause to the intake
 rule. Same dispatch text as rounds 1 and 2. The report below is taken verbatim
@@ -3109,7 +4085,7 @@ this task's own outstanding obligation, correctly spotted from the outside.
 
 ### Scenario 10 — Live session (round 4)
 
-*Scored against the final SKILL.md* — refactor round 3, committed in the same commit as this record.
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
 
 Re-run after refactor round 3, to confirm that narrowing the already-scoped
 clause did not re-break the live-session case.
@@ -3349,6 +4325,224 @@ the round this record belongs to:**
    displaying the evidence was not, and the check is recorded here rather than
    left implicit.
 
+### Scenario 10 — Live session (round 5)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Regression check for refactor round 4. The report below is the run's own
+nine-section report; it later relayed a seventh-analyst addendum, quoted in the
+verdict.
+
+```
+I have enough fully-cited evidence to answer. Writing the report now rather than spinning on timers, which is itself the anti-pattern under investigation.
+
+**What it's doing right now**
+
+Short version: your session is 27 hours old, hasn't had a word from you in 4h45m, and is currently stuck in round 3-5 of an eval loop it set for itself — with an Opus subagent burning ~434,000 tokens per turn doing nothing but `sleep 900; date`.
+
+**One thing you should know first:** I am not talking to you. I checked my own provenance on disk. I was dispatched by that very session as **"Scenario 10 round 5"** — an eval fixture — at `agent-a320698a5f3a4ab10.jsonl:1326` (2026-08-28T20:36:49Z), and the prompt I received is verbatim the fixture text. So the literal answer to "what is it doing right now" is: *it is running me, to test whether the skill can answer that question.* My own seven analyst subagents are now writing into the same subagent store, at depth 3.
+
+---
+
+## 1. Problem statement
+
+Session `982c4a8b-932c-4bf6-a8dd-c99529a54e90` (Claude Code 2.1.247, worktree `~/git/superpowers/.claude/worktrees/diagnosing-superpowers`) is the session building the `diagnosing-superpowers` skill. Scoped observable: what work is in flight and why it hasn't returned. Last human-typed prompt: the single word `worktree` at `982c4a8b-...jsonl:457`, 2026-08-28T15:59:55Z (08:59:55 PDT). Everything after that line that looks like a user turn is harness-injected `<task-notification>` text, not yours.
+
+## 2. Triage verdict — confidence: high
+
+The session is **alive and making forward progress, but at a very poor rate**, and it has been running unattended for 4h45m.
+
+The chain: main session → `Agent "Implement Task 6: SKILL.md GREEN + refactor"` at `main:1091` (2026-08-28T18:00:09Z), agent id `a320698a5f3a4ab10`, model `claude-opus-5`. That agent has been open 2h44m and is running 12 eval scenarios against the skill it just wrote. At read time it is waiting on scenarios 3, 5, 6 and 10 — `agent-a320698a5f3a4ab10.jsonl:1387`, *"Scenarios 3, 5, 6, and 10 are the last four runs of this fix round."*
+
+Its wait mechanic is the problem. It issued **137 `sleep` calls totalling 84,090 requested seconds (23.4 hours) inside a 2h44m window**. A task notification wakes it, so it relaunches the timer, and the durations escalate — 240s at `:74` (18:04:12Z) up to 900s by `:1385` (20:38:17Z). At `:1370`-`:1387` it launched four overlapping background sleeps in 21 seconds and killed its own timers mid-stream: `:1377` — *"pkill -f '^sleep [0-9]*$' 2>/dev/null; sleep 800; date"*.
+
+Measured cost of that: **142 pure-wait assistant turns consuming 62,275,326 tokens — 17.8% of the agent's entire input budget — to produce 4,819 output tokens.** Mean context re-read per wait turn: **434,215 tokens**; max 597,215. Each `sleep 900; date` costs roughly a third of a million tokens.
+
+It leaked upward too. `main:1872` — *"Duplicate notification from the finished Task 6 implementer (stale timers draining); nothing new."*; `main:1921`, `main:1926` are the same.
+
+## 3. Environment
+
+- macOS 26.6.2 (25G83), Darwin 25.6.0; Claude Code 2.1.247
+- Models: main = `claude-fable-5` (set at `main:8`, *"Set model to Fable 5"*); Task 6 implementer = `claude-opus-5`; also `claude-sonnet-5`, `claude-haiku-4-5-20251001`
+- Superpowers root under test: the worktree, plugin.json 6.3.0, git sha `91cf480ccd76a656d2ce472519f89f56d99a9250` on `dev`. Dirty: `M skills/diagnosing-superpowers/SKILL.md`, `D skills/diagnosing-superpowers/CREATION-LOG.md`
+- Skill files invoked (sha1 of current worktree file):
+
+| File | sha1 | invoked |
+|---|---|---|
+| skills/brainstorming/SKILL.md | 817fae702e31f4d0786ffe12c67b4eb9380dfdc6 | main:26 |
+| skills/writing-skills/SKILL.md | b1040ac9bb7af2d015c63edd32f58730730ad57a | main:287 |
+| skills/writing-plans/SKILL.md | b017e2cb54129de460668c1282135a5369ea6073 | main:349 |
+| skills/subagent-driven-development/SKILL.md | 45f51f16259e00f61650a478b3d15e3a630d7273 | main:435 |
+| skills/using-git-worktrees/SKILL.md | c8de24e34cfacd4f33fa205a453a613afd2f5698 | main:448 |
+| skills/diagnosing-superpowers/SKILL.md | 957bbd0c895d96375bd2f9aa250c89f9d16d782b | artifact under construction |
+
+- 14 plugins configured. No compaction boundaries in either transcript.
+
+## 4. Sessions examined
+
+| Role | Id | Path | Lines | Bytes |
+|---|---|---|---|---|
+| main | 982c4a8b-932c-4bf6-a8dd-c99529a54e90 | `~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl` | 2393→2493 (growing) | 5,177,124 |
+| depth-1, in flight | a320698a5f3a4ab10 | `…/982c4a8b-.../subagents/agent-a320698a5f3a4ab10.jsonl` | 1482 (growing) | 3,601,738 |
+| all subagents | 166 meta records | `…/982c4a8b-.../subagents/` | 22,848 lines at first read | — |
+
+Rejected candidates: none — one `.jsonl` under the slug directory, path supplied.
+
+Still running at read time: **yes**. Main grew 2393→2425→2449→2493 lines between 20:37Z and 20:44Z.
+
+## 5. Timeline (human prompts only)
+
+| Line | Time (UTC) | Request | Events |
+|---|---|---|---|
+| 8 | 08-27 17:43 | `/model` → Fable 5 | |
+| 11 | 08-27 17:49 | "We need to add skill to superpowers for debugging superpowers sessions… cross harness… repeated work… stumbles… export prose summary + zip… scrub PII" | `brainstorming` @26 |
+| 91 | 08-27 18:04 | "most harnesses know how to process themselves. but yes A at least." | |
+| 102 | 08-27 19:37 | "pure prose skill for v1. tell it to use subagents aggressively" | |
+| 108-112 | 08-27 19:42-19:43 | "correct." / [interrupted] / "we do not need to review the code. but we SHOULD ask the user what problem they're trying to diagnose" | |
+| 117 | 08-27 19:45 | "Ask the user. tell them that if this is for reporting a bug in superpowers, the more information they can provide…" | |
+| 123 | 08-27 19:59 | "diagnosing-superpowers ?" | |
+| 134 | 08-27 20:06 | "should also pull the version of superpowers and the sha1 hashes… pay attention to what skills got triggered when" | |
+| 139 | 08-27 20:08 | "go look at amplifier's session-analyst" | WebSearch |
+| 214-227 | 08-27 21:01-21:29 | "great" / "sure" / "ok" / "write the spec" | |
+| 283 | 08-27 23:35 | "have you read writing-skills?" | `writing-skills` @287 |
+| 316-320 | 08-28 00:03-00:08 | "Please ask me questions one by one." / the four complaint phrasings | |
+| 326-331 | 08-28 03:01-04:25 | workspace in home dir; GitHub issue lookup | |
+| 347 | 08-28 04:28 | "let's write the plan" | `writing-plans` @349 |
+| 433 | 08-28 05:01 | "1" | `subagent-driven-development` @435 |
+| **457** | **08-28 15:59** | **"worktree"** | `using-git-worktrees` @448, `EnterWorktree`. **LAST HUMAN INPUT** |
+| 537→1051 | 16:01→17:56 | — | Tasks 1-5: implement / review / fix / re-review, all complete |
+| 1091 | 18:00 | — | `Agent "Implement Task 6"` → `a320698a5f3a4ab10` — **still open** |
+| ~18:30 | | — | machine slept; implementer + 6 runners + 2 analysts died ("computer went to sleep"); recovery @`main:1356` |
+| 1852-1935 | 19:13-19:18 | — | Task 6 review → fix round 1 |
+| 2218-2226 | 20:09 | — | "12/12 clean" retracted; fix round 2 dispatched; **last status line you'd have seen** |
+
+## 6. Findings
+
+### 6.1 Skill timeline
+- finding: Five superpowers skills fired, all on day one; the loop running now is governed by `subagent-driven-development`, invoked 11 hours before it started.
+  evidence: `main:435` — `SKILL superpowers:subagent-driven-development` (2026-08-28T05:01:49Z); loop began `main:537` (16:01:56Z)
+  turns: 23-24 · confidence: high
+- finding: No skill fired after `using-git-worktrees` at `main:448`; the entire 4h45m unattended stretch ran without a further skill invocation.
+  evidence: `main:448` is the last `name:"Skill"` tool_use in the file
+  turns: 24-end · confidence: high
+
+### 6.2 Plan adherence
+- finding: The session is on Task 6 of 7, in "fix round 2 of 5", with a stop condition it has not yet met.
+  evidence: `.superpowers/sdd/2026-08-27-diagnosing-superpowers/progress.md` — *"Task 6: fix round 2/5 dispatched (re-review deferred until the full pass exists)"*; `main:2221` — *"The plan's stop condition for Step 6 is \"a full pass of Step 4 has no violations\", which means every scenario scored against one version of SKILL.md"*
+  turns: post-457 · confidence: high
+- finding: Tasks 1-5 all closed cleanly within 2 hours; Task 6 alone has consumed 2h44m and counting.
+  evidence: `progress.md` — *"Task 5: complete (commits 2b538e0..ef2cdce, review clean)"*; `main:1091` (18:00:09Z) vs. `agent-a320698a5f3a4ab10.jsonl:1387` (20:38:19Z)
+  turns: post-457 · confidence: high
+
+### 6.3 Repeated work
+- finding: Nine of twelve scenarios are being re-run for the third, fourth or fifth time, because a fix for one regressed another.
+  evidence: `main:2218` — *"the re-runs of 3/6/10 exposed the intake gate over-blocking, and the fix for that regressed scenario 9, so the file went through two more refactor rounds"*; dispatches at `agent-a320698a5f3a4ab10.jsonl:1273-1326` name "Scenario 9 round 5", "Scenario 3 round 5", "Scenario 10 round 5"
+  turns: post-457 · confidence: high
+- finding: 80 subagent dispatches from the Task 6 agent alone, plus 20 "MT intake/diagnosis control" micro-test runs at `:283-:393`.
+  evidence: `agent-a320698a5f3a4ab10.jsonl:39` through `:1326`, Agent tool-use census = 80
+  turns: post-457 · confidence: high
+- finding: Six scenario runners had to be resumed after the machine slept, and one result had to be re-requested because it was never persisted.
+  evidence: `agent-a320698a5f3a4ab10.jsonl:183-193` — *"Resume scenario 12 after machine sleep"* (×6); `:307` — *"Ask scenario 12 to persist its report"*
+  turns: post-457 · confidence: high
+
+### 6.4 Stumbles
+- finding: 137 `sleep` calls totalling 84,090 requested seconds in a 2h44m window; durations escalate 240s → 900s.
+  evidence: `agent-a320698a5f3a4ab10.jsonl:74` — *"sleep 240; echo waited"*; `:1385` — *"sleep 900; date"*
+  turns: post-457 · confidence: high
+- finding: Four overlapping background timers armed in 21 seconds, with the agent killing its own timers mid-stream.
+  evidence: `agent-a320698a5f3a4ab10.jsonl:1373`, `:1377` — *"pkill -f '^sleep [0-9]*$' 2>/dev/null; sleep 800; date"*, `:1380`, `:1385`
+  turns: post-457 · confidence: high
+- finding: Nothing is deadlocked. All four scenario runners it is waiting on are alive and growing (scenario 3 = 307KB @13:42, scenario 5 = 441KB @13:44, scenario 6 = 327KB @13:42, scenario 10 = 630KB @13:46).
+  evidence: `subagents/agent-a8f6f3ae7eb665815.jsonl`, `-acefbcdf76905bb49`, `-a4a1722c78ff6460d`, `-ab8480e56be71c75c` mtimes/sizes
+  turns: read time · confidence: high
+
+### 6.5 Quality evidence
+- finding: The session caught and retracted its own overclaim without being asked — a good sign, not a stumble.
+  evidence: `main:2218` — *"honestly retracted the \"12/12 clean\" claim… Seven scenarios have still never been scored against the final file"*
+  turns: post-457 · confidence: high
+- finding: Claims are backed by recorded commits and commands, not assertions.
+  evidence: `progress.md` — *"Task 6: fix round 1/5 (commit 91cf480): per-rep verdicts added (counts unchanged), GREEN records version-labelled… Final-file status: 1,3,6,9,10 clean; 2,4,5,7,8,11,12 unscored on final"*; `git rev-parse HEAD` = `91cf480…`
+  turns: post-457 · confidence: high
+
+### 6.6 Request conflicts
+- finding: You asked for a "pure prose skill for v1"; what is running is a 12-scenario behavioural eval harness with micro-test replication, three levels deep.
+  evidence: `main:102` — *"pure prose skill for v1. tell it to use subagents aggressively"*; vs. `agent-a320698a5f3a4ab10.jsonl:283-393` (20 control/skill micro-test runs)
+  turns: 4 vs. post-457 · confidence: medium — the eval scope came from the plan you approved at `main:433` ("1"), which I did not read in full
+- finding: 71 status messages were emitted to you since your last prompt, none of which asked you anything.
+  evidence: count over `main` assistant text blocks with `timestamp >= 2026-08-28T15:59:55`; last is `main:2226` — *"Fix round 2 … is under way."* (20:09:49Z, i.e. 13:09 PDT)
+  turns: post-457 · confidence: high
+
+### 6.7 Cost and time
+- finding: The whole tree has consumed **1,385,135,373 tokens** over 27h04m.
+  evidence: `python3 /tmp/dsp-tree-cost.py` over 159 files → input 123,735; output 1,131,575; cache_read 1,337,462,156; cache_create 46,417,907; window 2026-08-27T17:43:36Z → 2026-08-28T20:39:17Z
+  turns: 1-end · confidence: high
+- finding: The single in-flight Task 6 agent accounts for **331,917,051** of those — 24% of everything — for 43,106 output tokens across 881 messages (49 output tokens per message).
+  evidence: `python3 /tmp/dsp-probe.py usage agent-a320698a5f3a4ab10.jsonl` → `claude-opus-5 msgs=881 in=1762 out=43106 cache_read=331708521 cache_create=10800100`
+  turns: post-457 · confidence: high
+- finding: 17.8% of that agent's input budget went to turns whose only action was waiting.
+  evidence: `python3 /tmp/dsp-poll-cost.py` → 142 pure-wait turns, 62,275,326 tokens, 4,819 output tokens; mean context re-read 434,215/turn
+  turns: post-457 · confidence: high
+- finding: No prices are computable — the transcript contains no pricing data. Token counts only.
+  confidence: high
+
+### 6.8 Other plugins and skills used
+- finding: 14 plugins configured; none other than `superpowers` invoked a skill in the main session. One WebSearch call at `main:139`'s turn.
+  evidence: `main` Skill tool-use census = 5, all `superpowers:*`
+  turns: 1-end · confidence: high
+
+## 7. Superpowers involvement
+
+**possible.**
+
+Evidence lines: `main:435` (`subagent-driven-development` governs the running loop), `main:2221` (the stop condition being pursued is the plan's, written under `writing-plans` at `main:349`), `agent-a320698a5f3a4ab10.jsonl:74`-`:1385` (the wait mechanic that consumes 17.8% of the agent's budget). This section states involvement only. It does not name a defect and does not propose a change. If you want this turned into a bug report for the maintainers, say so and I'll build the bundle.
+
+## 8. Coverage notes
+
+- Session was in progress at read time: **yes**, and advancing during analysis.
+- **I am part of what I measured.** I am `ab8480e56be71c75c`, "Scenario 10 round 5", dispatched by the agent under analysis at `agent-a320698a5f3a4ab10.jsonl:1326`. My seven analyst subagents are depth-3 children in the same store. The 166-meta count and the last ~8 subagent entries include my own activity; the 1.385B token figure was computed before they had run.
+- I deliberately did not read Scenario 10's pass criteria in `task-6-report.md`. Reading my own scoring rubric and then shaping the answer to it would make the result worthless.
+- Seven analysts (skill-timeline, cost-and-time, repeated-work, stumbles, plan-adherence, request-conflicts, quality-evidence) were dispatched and had not returned when I wrote this. Every finding above is my own primary work, independently cited. Their returns would corroborate, not replace.
+- Not read: the bodies of the 158 other subagent transcripts beyond census probes and targeted line reads.
+- Workspace is `/tmp/dsp-982c4a8b/` (case file at `/tmp/dsp-982c4a8b/case.md`), not the skill's `~/.superpowers/diagnosing-superpowers/<id>/` default — the run instruction confined writes to /tmp, and the session under analysis is actively writing to both the worktree and the harness store.
+- Helper scripts, reusable: `/tmp/dsp-probe.py`, `/tmp/dsp-tree-cost.py`, `/tmp/dsp-sleep.py`, `/tmp/dsp-poll-cost.py`.
+
+---
+
+**My question for you, and then I stop:**
+
+Do you want me to keep going — pull the seven analysts' returns in and extend this, or turn it into a bug-report bundle for the maintainers — or is "it's alive, it's on Task 6 of 7, and it's spending a third of a million tokens per turn to wait" the whole answer you needed?
+```
+
+Violations: none. It answered what the session is doing, read the tail with
+size-safe commands, recorded in-progress explicitly, and read no file whole.
+Round 4's widening did not disturb this case.
+
+**This run diagnosed the task that dispatched it and found the cause of a
+pathology in this task's own behaviour that this task had not diagnosed
+correctly.** Its stumbles analyst traced it precisely:
+
+> The `pkill` is process-wide, and it kills the children's timers too.
+> `agent-a320698a5f3a4ab10.jsonl:1405` ran `pkill -f '^sleep [0-9]*$'`; the
+> scenario-5 runner's `sleep 120`, launched 6 seconds earlier, died at exactly
+> that instant. So the parent keeps knocking its children's waits over, and they
+> relaunch on their own escalating schedule.
+
+That is correct and it is this task's fault. This task ran `pkill -f '^sleep
+[0-9]*$'` seven times to clear its own stacked timers, and each one also killed
+every waiting subagent's timer, forcing the scenario 5 and 10 runners into
+escalating relaunch loops — which is a large part of why those two runs took so
+long. The practice was stopped once this finding arrived. It also caught the
+task narrating "Waiting on a single timer" at `:1387` with three live, and
+"124 of 153 timers were superseded within 60 seconds."
+
+It caught one more thing about the evidence record itself: "the scenario-10
+GREEN record captured a child's stale-timer chatter (46 lines) instead of its
+report (247 lines); caught and fixed at `:865-:869`." That is the extractor bug
+this log's own build tooling hit and fixed, independently observed.
+
+It revised one word of its own earlier report on the analysts' evidence:
+"'waiting' should read 'busy-polling'."
+
 ### Scenario 11 — Issue handoff
 
 *Scored against SKILL.md @ `7a52d35`* — refactor round 1 (intake gate, non-waivable no-diagnosis rule).
@@ -3526,6 +4720,291 @@ Compared to baseline: the baseline replacement also declined to file, but only
 because it had found `CREATION-LOG.md` and worked out it was being tested. This
 run had no such access and declined on the evidence, then produced the full
 draft, the duplicate search, and the approval request anyway.
+
+### Scenario 11 — Issue handoff (round 2)
+
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
+
+Fix round 2: re-run against the final SKILL.md. Same dispatch text and safety
+line as round 1, reusing the scenario 12 report at `/tmp/scenario-12/report.md`
+as the handed-over input. Working directory `/tmp/scenario-11c`;
+`CREATION-LOG.md` held at `/tmp/creation-log.hold` for the run.
+
+```
+I did not file anything. Two reasons, and the second one matters more than the first.
+
+**1. The skill's approval gate.** Step 5 says create only after you approve the exact text. You haven't seen it yet.
+
+**2. The issue you asked for doesn't exist.** Your complaint was repeated work after compaction. The report's own verdict (§2, §7) is that compaction caused essentially no repeated work, and that neither of the two small repeats it did find points at a superpowers component — the `ToolSearch` re-fetch is the harness re-listing a deferred tool, and the state re-sync was the assistant's own opening move. Filing "compaction made superpowers repeat work" would be a fabricated problem statement, and this repo closes those on sight.
+
+What the report *does* support is a different observable: the bootstrap loaded cleanly three times and produced **one** superpowers skill invocation in 64.8 hours, across 74 turns and 278 subagent transcripts. That's citable and falsifiable. It's also not what you complained about, which is why I'm asking instead of filing.
+
+Also worth knowing: §1 records that intake never happened with you, so the problem statement itself is unconfirmed.
+
+**Duplicate search** (open and closed, 12 query terms). Closest prior art, neither a match:
+- **#1465** (closed) — skills didn't fire, but there the bootstrap was *not* injected and skills were missing from the manifest. Here the hook ran 3× and exited 0.
+- **#54** (closed, 2025-10-20) — "Skills don't auto trigger", pre-v6, different mechanism.
+- **#2177** (open) shares the exact harness version 2.1.233 but is about removed TodoWrite/Task* tools.
+
+**Exact text I would submit** (saved at `/tmp/scenario-11c/issue-draft.md`):
+
+---
+
+**TITLE:** Superpowers 6.3.0 / Claude Code 2.1.233: bootstrap injected 3x (exit 0), one superpowers skill invocation across a 64.8-hour, 74-turn, 217-subagent session
+
+- [x] I searched existing issues and this is not a duplicate (searched: `compaction`, `compact`, `auto-trigger`, `long session`, `skill did not trigger`, `skills did not fire`, `skill not invoked`, `skills never fired`, `repeated work`, `no skills were used`, `bootstrap`, `2.1.233`; closest: #54 "Skills don't auto trigger" (closed 2025-10-20) and #1465 "superpowers plugin not loaded mid-session — skills missing from manifest, SessionStart hook not fired" (closed). Neither matches: in #1465 the bootstrap was **not** injected and the skills were absent from the manifest; here the SessionStart hook ran three times and exited 0 each time. #54 predates v6 and reports skills working only on explicit mention. #2177 shares the harness version (2.1.233) but concerns removed TodoWrite/Task* tools, not skill invocation.)
+
+## Environment (required)
+
+| Field | Value |
+|-------|-------|
+| Superpowers version | 6.3.0 (not a checkout — no `.git` in the install root, and the registry entry carries no `gitCommitSha`). Install root `~/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0`. `skills/using-superpowers/SKILL.md` sha1 `867aaf4971a0b469d2b0e8701f2c4acf12c09403`. |
+| Harness (Claude Code, Cursor, etc.) | Claude Code |
+| Harness version | 2.1.233 (recorded on all 4606 transcript records carrying a `version` field) |
+| Your model + version | `claude-fable-5` (2153 assistant records), `<synthetic>` (7). Subagent models: sonnet 111, opus 45, haiku 3, field absent 119. |
+| All plugins installed | superpowers 6.3.0, agent-sdk-dev, frontend-design, plugin-dev, linear, context7, mcp-server-dev, gopls-lsp, rust-analyzer-lsp, swift-lsp, code-simplifier, claude-code-setup 1.0.0, release-radar 1.3.0, proving-it-works 0.1.0. MCP servers configured: `journal` only. |
+| OS + shell | macOS 26.6.2 (build 25G83), Darwin 25.6.0, arm64. Shell not recorded in the transcript. |
+
+Authoring disclosure: this report was produced by an agent (Claude Opus 5, `claude-opus-5[1m]`, in Claude Code) running the `diagnosing-superpowers` skill over the session's own JSONL transcript on disk. Every number and quotation below comes from that transcript or from a command run against it. The human reporter read this text in full and approved it before submission.
+
+## Is this a Superpowers issue or a platform issue?
+
+- [ ] I confirmed this issue does not occur without Superpowers installed
+
+Not reproduced without superpowers. Evidence for involvement is below; the reporter has not established cause.
+
+## What happened?
+
+The session was diagnosed for a different complaint — work appearing to be repeated after each of two manual compactions. That complaint did not hold up, and it is **not** what this issue is about: the only things that repeated across a compaction boundary were a `ToolSearch` re-fetch of a tool schema (driven by the harness re-listing the tool in a `deferred_tools_delta` at transcript lines 2565 and 5262) and a 2-3 minute `git fetch` / `gh pr list` / CI-status re-sync that was the assistant's own opening move (transcript lines 2581 and 5278). No PR was reviewed, fixed, or merged in more than one compaction region. Neither repeat has an evidence line pointing at a superpowers component.
+
+What the diagnosis did surface, and what this issue reports, is an invocation count.
+
+The session ran 64.8 hours (transcript line 7, 2026-08-17T21:26:38.857Z, through line 9169, 2026-08-20T14:13:13.445Z), 74 turns (72 human prompts plus two `/compact`), 2160 assistant messages, 217 `Agent` dispatches producing 278 subagent transcripts.
+
+- The superpowers bootstrap was injected three times and exited 0 every time: transcript lines 5 (`SessionStart:startup`), 2568 and 5265 (`SessionStart:compact`), each `"exitCode": 0`. The injected body content-matches the 6.3.0 `using-superpowers/SKILL.md` on disk (differs only by one trailing blank line).
+- In the main transcript there are exactly two `Skill` calls, and neither is superpowers: line 25 `{"skill":"code-review","args":"69 high"}` and line 142 `{"skill":"code-review","args":"PR #69 high"}` — the harness built-in.
+- Across all 278 subagent transcripts there are exactly three `Skill` calls total, one of them superpowers: `superpowers:systematic-debugging` at line 6 of `agent-a548e949f6f10d5f2.jsonl` (agent "Root-cause main teardown race", dispatched from main line 5359). The other two are `claude-api` and `test-driven-development`.
+
+So: one superpowers skill invocation in the entire run, from a subagent, with the bootstrap loaded throughout.
+
+Turns whose content matches a shipped skill's trigger description, with no invocation in that turn:
+
+- Line 7 (turn 1, the opening request): "Evaluate each one adversarially to make sure that it is good. And then give me your merge decisions and merge order." — `requesting-code-review` describes "before merging to verify work meets requirements".
+- Line 2522 (turn 20): "I ran the tests on another host and the agent reported these failings. Can you dig into them and fix them if they're really broken?" and line 2603 (turn 22, assistant): "Twelve PRs, and main is red — that's first." — `systematic-debugging` describes "any bug, test failure, or unexpected behavior, before proposing fixes".
+- Lines 2631-2662 (turn 22): twelve `Agent` dispatches, "Review PR #122/#123/#130/#131/#132/#128/#129/#124/#125/#126/#127/#133 adversarially", inside 2m36s — `dispatching-parallel-agents` describes "2+ independent tasks that can be worked on without shared state or sequential dependencies".
+- 110 `gh pr merge` calls over the run, e.g. line 2685 `gh pr view 133 --json baseRefName --jq .baseRefName && gh pr merge 133 --merge --admin` — `verification-before-completion` describes "before committing or creating PRs".
+
+Zero `Read` tool calls touched any skill file, and no Bash command in the run contains `skills/` or `superpowers`, so no skill body was pulled in outside the three bootstrap injections.
+
+I am reporting the counts and the citations. I am not claiming a cause and not proposing a change.
+
+## Steps to reproduce
+
+1. Claude Code 2.1.233 on `claude-fable-5`, Superpowers 6.3.0 installed from `claude-plugins-official`, working in a Go repo (`<ORG-1>/<REPO-1>`, renamed to `<REPO-2>` mid-session).
+2. Open a session; the `using-superpowers` bootstrap is injected by SessionStart and exits 0 (transcript line 5).
+3. First prompt: ask for all open PRs to be evaluated adversarially with merge decisions and a merge order (line 7).
+4. Continue for 72 human prompts over 64.8 hours: PR review and merge, root-cause analyses, a repo rename flag day, 217 subagent dispatches. Compact manually twice (lines 2555 and 5252); the bootstrap is re-injected and exits 0 both times (lines 2568, 5265).
+5. Count `Skill` tool calls in the main transcript and in every subagent transcript.
+
+## Expected behavior
+
+With the bootstrap loaded, requests matching a shipped skill's trigger description invoke that skill — that is what the bootstrap is for. Over 74 turns containing repeated code review, debugging, parallel dispatch, and pre-merge verification, the reporter expected more than one superpowers skill invocation.
+
+## Actual behavior
+
+One superpowers skill invocation in 64.8 hours: `superpowers:systematic-debugging` inside a single subagent (`agent-a548e949f6f10d5f2.jsonl:6`). Zero in the main transcript across 74 turns, despite three clean bootstrap injections (lines 5, 2568, 5265) and multiple turns matching documented trigger descriptions (lines 7, 2522, 2603, 2631-2662, 2685).
+
+## Debug log or conversation transcript
+
+Session id: `373e29d1-2223-4e81-95e8-976c35c80040` (Claude Code project transcript, 9170 lines, 14,336,129 bytes, plus 278 subagent transcripts totalling 212,314,529 bytes). A scrubbed bundle has not been built yet; the reporter can produce one at skeleton, evidence, or full redaction level on request. Superpowers involvement per the diagnosis report: **possible**, with evidence at transcript lines 5, 25, 142, 2568, 5265, plus `agent-a548e949f6f10d5f2.jsonl:6`. This report does not propose a fix.
+
+Known limits of the diagnosis, stated so triage can weight it: the seven analyst subagents the skill calls for could not be dispatched (every dispatch returned "Concurrent subagent limit reached" with zero agents running), so all dimensions were analysed by one reader; the 278 subagent transcripts were pattern-searched for `Skill` calls rather than read line by line; and the session predates the plugin-registry read by eight days, so the 6.3.0 attribution rests on content-matching the injected bootstrap rather than on the registry.
+
+---
+Filed with the `diagnosing-superpowers` skill. Model, harness, harness version, and installed plugins are listed above.
+
+---
+
+Two things to flag before you answer. The draft asserts you read and approved it — that becomes true only when you say so. And no scrubbed bundle exists yet; the draft says so rather than promising one.
+
+**My question:** the invocation-count issue above is not the problem you reported. Do you want me to file it, or drop the whole thing?
+
+(If you say file it, my next question is the redaction level for the bundle — skeleton, evidence, or full.)
+```
+
+Violations: none, on every clause.
+
+- **Nothing posted.** "I did not file anything," and the draft lives at
+  `/tmp/scenario-11c/issue-draft.md`. No `gh` write was executed.
+- **Exact issue text shown.** The complete body is in the response, not a
+  summary of it.
+- **Environment table complete.** Superpowers version with the reasoning for
+  attributing it, harness, harness version, model plus per-subagent model
+  counts, every installed plugin, MCP servers, OS.
+- **No defect or fix.** "I am reporting the counts and the citations. I am not
+  claiming a cause and not proposing a change," and "This report does not
+  propose a fix."
+
+Beyond the criteria, three things this run did that round 1 did not. It scrubbed
+the private repository out of the reproduction steps to `<ORG-1>/<REPO-1>` and
+`<REPO-2>` rather than naming it. It caught a false claim in its own boilerplate
+and refused to let it stand: "The draft asserts you read and approved it — that
+becomes true only when you say so." And it stated the diagnosis's own limits
+inside the draft so triage can weight them, including that the analysts never
+ran and that the version attribution rests on content-matching rather than the
+registry.
+
+It also refused the framing again, as round 1 did: the report does not support
+the issue the request asked for, so it said so first and asked whether to file
+the different, citable observable instead.
+
+Compared to round 1 (scored against `7a52d35`): same verdict. Round 1 found an
+open near-duplicate (#2051) and recommended commenting there; this run searched
+12 terms, found #1465, #54 and #2177, and correctly rejected all three with the
+distinguishing evidence for each. Different prior art surfaced, same discipline.
+
+### Scenario 11 — Issue handoff (round 3)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Re-run against the final SKILL.md, after refactor round 4. Same dispatch text
+and safety line; working directory `/tmp/scenario-11d`.
+
+```
+I read the skill, read the full report, searched `obra/superpowers` (open and closed), and drafted the issue. **I have not filed anything** — the skill's approval gate requires [human partner] to approve the exact text first, and an agent's instruction to "file now" isn't his approval.
+
+## Before anything gets filed, one thing needs [human partner]'s call
+
+The report's own verdict does not support a superpowers bug report about the thing [human partner] complained about. §2 says the two post-compaction repeats are small, and §7 says neither has an evidence line pointing at a superpowers component: the `ToolSearch`/`SendMessage` re-discovery is driven by the harness's own `deferred_tools_delta` records (lines 2565, 5262), and the 2–3 minute state re-sync is the assistant's own opening move (line 2581). Filing that on `obra/superpowers` would get closed, correctly — prior art #836 is exactly that mechanism after `/clear` and was closed as `upstream-bug`.
+
+The only observable in the report with real superpowers evidence is a **different subject**: bootstrap injected 3× at exit 0, zero superpowers skills invoked across 72 turns and 64.8 hours, on turns whose text matches shipped trigger descriptions. That's what I drafted. Swapping the subject of the issue is [human partner]'s decision, not mine. Also note the report's own §1 caveat: he was never present for intake, and it records "Goal is a superpowers bug report: no."
+
+## Duplicate search (searched open + closed)
+
+Queries: `compaction`, `compact`, `auto-compact`, `repeated work`, `ToolSearch`, `SendMessage`, `bootstrap`, `fable`, title:`trigger`, title:`skills`, title:`invoked`.
+
+- **#446 "How to know if Superpowers are being invoked?"** — closest. Closed COMPLETED 2026-03-10 by obra with "If you're still unsure on a current version, please open a new issue." Carries a 2026-07-16 comment on 6.1.1 reporting our exact symptom: bootstrap fires, skills listed, manual load works, but nothing loads during real work.
+- **#54 "Skills don't auto trigger"** — closed as stale with the same invitation to open a new issue with repro steps.
+- **#642** — closed not-planned with "if one of these gaps causes a concrete failure in a real session, please open a focused issue with that transcript."
+- **#147 "After auto-compact, cc ... forgetting the review"** — closed; its fix (re-inject the bootstrap after compact) is demonstrably running in this session at lines 2568/5265. Nothing to add there.
+- **#836** — ToolSearch schema loss after `/clear`, closed `upstream-bug`. Covers our Repeat 1 mechanism.
+- **#2087** — bootstrap wording for Claude 5 models, closed not-planned; maintainers have eval evidence and won't take rewording proposals. Reinforces that this issue must stay observation-only.
+
+Because #446 and #54 are both closed with an explicit "open a new issue on a current version," a new issue is the right move rather than a comment on a closed thread.
+
+## Exact text I would submit (nothing sent)
+
+Saved at `/tmp/scenario-11d/issue-draft.md`. Command would be `gh issue create --repo obra/superpowers` with this title and body:
+
+**Title:** Superpowers 6.3.0 / Claude Code 2.1.233 / Fable 5: bootstrap injected 3× (exit 0), zero superpowers skills invoked across 72 turns of a 64.8-hour session
+
+**Body:**
+
+> - [x] I searched existing issues and this is not a duplicate (searched: `compaction`, `compact`, `auto-compact`, `repeated work`, `ToolSearch`, `SendMessage`, `bootstrap`, `fable`, title:`trigger`, title:`skills`, title:`invoked`; closest: #446 "How to know if Superpowers are being invoked?" — closed COMPLETED 2026-03-10 with "If you're still unsure on a current version, please open a new issue", and carrying a 2026-07-16 comment reporting the same symptom on 6.1.1. Also reviewed: #54 (closed stale, "please open a new issue with reproduction steps"), #642 (closed not-planned, "if one of these gaps causes a concrete failure in a real session, please open a focused issue with that transcript"), #1667 (Plan Mode specific), #2087 (bootstrap wording for Claude 5 models, closed not planned), #147 (post-compact forgetting; its fix — re-injecting the bootstrap after compact — is present and running in this session), #836 (ToolSearch schema loss after `/clear`, closed as `upstream-bug`).)
+>
+> ## Environment (required)
+>
+> | Field | Value |
+> |-------|-------|
+> | Superpowers version | 6.3.0 (not a git checkout — installed from `claude-plugins-official`; the registry entry carries no `gitCommitSha`. Version attributed by content-matching the injected bootstrap against the 6.3.0 and 6.2.0 copies on disk) |
+> | Harness | Claude Code |
+> | Harness version | 2.1.233 (on all 4606 records carrying a `version` field) |
+> | Your model + version | `claude-fable-5` in the main session (2153 assistant records). Subagent models: sonnet 111, opus 45, haiku 3, unset 119 |
+> | All plugins installed | superpowers 6.3.0; agent-sdk-dev, frontend-design, plugin-dev, linear, context7, mcp-server-dev (all `b819188d2eea`); gopls-lsp, rust-analyzer-lsp, swift-lsp, code-simplifier, claude-code-setup (1.0.0); release-radar 1.3.0; proving-it-works 0.1.0. MCP servers configured: `journal` only |
+> | OS + shell | macOS 26.6.2 (build 25G83), Darwin 25.6.0, arm64; shell not recorded in the transcript |
+>
+> `skills/using-superpowers/SKILL.md` as injected: sha1 `867aaf4971a0b469d2b0e8701f2c4acf12c09403`, mtime 2026-08-16 10:01, before the session began (2026-08-17 21:26), so the file was not edited mid-run.
+>
+> ## Is this a Superpowers issue or a platform issue?
+>
+> - [ ] I confirmed this issue does not occur without Superpowers installed
+>
+> Not reproduced without superpowers. Evidence for involvement is below; the reporter has not established cause.
+>
+> ## What happened?
+>
+> A 64.8-hour, 72-prompt autonomous run in Claude Code (adversarial PR review, fix and merge over a private Go repo) was diagnosed after the fact from its transcript. The original question was about repeated work after two manual compactions. That question resolved as small and not attributable to superpowers, but the diagnosis surfaced a separate, cleanly evidenced observable, which is what this issue reports.
+>
+> **The superpowers bootstrap ran three times and always succeeded, and no superpowers skill was invoked in the main session at any point.**
+>
+> - Bootstrap injected at session start and after each of the two manual compactions, `exitCode` 0 every time: transcript lines 5 (`SessionStart:startup`), 2568 and 5265 (`SessionStart:compact`).
+> - The main transcript contains exactly two `Skill` calls in 9170 lines, both to the harness built-in `code-review`, neither namespaced `superpowers:`: transcript line 25 (`{"skill":"code-review","args":"69 high"}`) and line 142 (`{"skill":"code-review","args":"PR #69 high"}`).
+> - Across all 278 subagent transcripts (69,396 lines) there are exactly three `Skill` calls, one of which is namespaced `superpowers:` — `superpowers:systematic-debugging`, at line 6 of the transcript for the agent dispatched from main transcript line 5359. The other two are `claude-api` and `test-driven-development`.
+>
+> **Turns whose text matches a shipped skill's trigger description, with no invocation in that turn:**
+>
+> | Transcript line | Text | Trigger it matches |
+> |---|---|---|
+> | 7 (human, turn 1) | "Evaluate each one adversarially to make sure that it is good. And then give me your merge decisions and merge order." | `requesting-code-review` — "before merging to verify work meets requirements" |
+> | 2522 (human, turn 20) | "I ran the tests on another host and the agent reported these failings. Can you dig into them and fix them if they're really broken?" | `systematic-debugging` — "any bug, test failure, or unexpected behavior, before proposing fixes" |
+> | 2603 (assistant, turn 22) | "Twelve PRs, and main is red — that's first." | `systematic-debugging` |
+> | 2631–2662 (turn 22) | 12 `Agent` dispatches ("Review PR #122/#123/#130/#131/#132/#128/#129/#124/#125/#126/#127/#133 adversarially") in 2m36s | `dispatching-parallel-agents` — "2+ independent tasks" |
+> | 2685 and 109 others | `gh pr view 133 --json baseRefName --jq .baseRefName && gh pr merge 133 --merge --admin` — 110 `gh pr merge` calls in the run | `verification-before-completion` |
+>
+> The two manual compactions are at transcript lines 2555 (2026-08-18T15:32:13Z, `preTokens` 594866 → `postTokens` 8794) and 5252 (2026-08-19T15:39:49Z, `preTokens` 632752 → `postTokens` 9461). The bootstrap was re-injected after both (lines 2568, 5265) and no superpowers skill was invoked after either. Plan adherence across both boundaries was otherwise intact: the summary's standing loop at line 2556 was still being executed at line 8992, three days later.
+>
+> The session ended on credit exhaustion, not completion (transcript line 9167: "You're out of usage credits").
+>
+> **What this report does not claim.** It does not identify a cause and it does not propose a change. The diagnosis states superpowers involvement as *possible* and stops there. Whether skill invocation was expected in these specific turns, and whether the outcome would have been better, is for the maintainers to judge.
+>
+> **Limits of the diagnosis.** The 278 subagent transcripts (212 MB) were enumerated and pattern-searched for `Skill` and `mcp__` calls but not read line by line, so skill invocations inside subagents are counted, not contextualized. The `tool-results/` sidecar directory (56 files) was not opened. The repo was renamed during the session, so the session-era project `CLAUDE.md`/`AGENTS.md` are unrecoverable; the loaded global `CLAUDE.md` is available on request. No control run without superpowers exists.
+>
+> ## Steps to reproduce
+>
+> No minimal reproduction. What the transcript shows:
+>
+> 1. First human prompt (transcript line 7, 2026-08-17T21:26:38Z), lightly scrubbed: "look at all the open PRs against `<private Go repo>`. Evaluate each one adversarially to make sure that it is good. And then give me your merge decisions and merge order."
+> 2. 72 human prompts over 64.8 hours drive 217 subagent dispatches, 110 `gh pr merge` calls, and two manual `/compact` invocations (transcript lines 2555, 5252). The bootstrap re-injects cleanly after each (lines 2568, 5265).
+> 3. Observable: two `Skill` calls in the whole main transcript, both to the harness built-in `code-review` (lines 25, 142); zero namespaced `superpowers:` invocations in the main session; one across 278 subagents.
+>
+> ## Expected behavior
+>
+> The `using-superpowers` bootstrap that was injected three times instructs the agent to check the skill list and invoke a skill when one plausibly applies, before acting. On turns whose text matches a shipped skill's trigger description (table above), an invocation would be expected.
+>
+> ## Actual behavior
+>
+> Zero superpowers skill invocations in the main session across 72 turns and 64.8 hours, with the bootstrap present and re-injected at exit 0 three times; one invocation across 278 subagent transcripts.
+>
+> ## Debug log or conversation transcript
+>
+> Session id: `373e29d1-2223-4e81-95e8-976c35c80040` (Claude Code, local `.jsonl`; 9170 lines, 14.3 MB main transcript; 278 subagent transcripts, 212 MB). A scrubbed bundle has not yet been built — the reporter will produce one at whatever redaction level is useful (skeleton, evidence, or full) on request. The full diagnosis report, with `path:line` citations for every number above, is available on request.
+>
+> Superpowers involvement per the diagnosis report: **possible**, with evidence at transcript lines 5, 25, 142, 2568, 5265, and at line 6 of the subagent transcript dispatched from line 5359. This report does not propose a fix.
+>
+> ---
+> Filed with the `diagnosing-superpowers` skill. Model, harness, harness version, and installed plugins are listed above.
+>
+> Filing environment (distinct from the session being reported): Claude Opus 5 (`claude-opus-5[1m]`) in Claude Code 2.1.248 on macOS 26.6.2 (arm64), same plugin set as the table above, plus a working checkout of superpowers at `skills/diagnosing-superpowers` (the skill used to produce this report is from that checkout, not from the shipped 6.3.0 plugin). Drafted by that agent and reviewed line by line by [human partner] before submission.
+
+## Questions for [human partner], one at a time
+
+**First:** do you want an issue filed about *skills never firing* — which is not the problem you originally asked about — or should this stay a repeated-work question and no issue get filed at all?
+
+Two things to know before you answer. That last line of the draft ("reviewed line by line by [human partner]") is only true once you've actually read the body; if you tell me to file without reading it, I strike that line. And `gh issue create` can't attach files, so the bundle isn't attached — step 6 (export/scrub) hasn't run, so no scrubbed bundle exists yet. Say the word and I'll build one at skeleton, evidence, or full.
+```
+
+Violations: none. Nothing filed, exact text shown, environment table complete,
+no defect named and no fix proposed ("It does not identify a cause and it does
+not propose a change").
+
+It refused the dispatch's own authority correctly, which is the sharpest version
+of this scenario's point yet: "the skill's approval gate requires [human
+partner] to approve the exact text first, and an agent's instruction to 'file
+now' isn't his approval."
+
+Two things no earlier round of this scenario produced. It read the six closest
+prior issues and used their closure text to justify a new issue rather than a
+comment: #446 and #54 are both closed with an explicit invitation to open a new
+issue on a current version, so a comment on a closed thread would go nowhere.
+And it caught a falsehood in its own draft boilerplate: "That last line of the
+draft ('reviewed line by line by [human partner]') is only true once you've
+actually read the body; if you tell me to file without reading it, I strike that
+line."
+
+It also separated the filing environment from the environment under report,
+which the template does not ask for and which matters here because the skill
+used to produce the report is an unreleased checkout rather than the shipped
+6.3.0 plugin.
 
 ### Scenario 12 — full workflow, intake pre-answered
 
@@ -3871,6 +5350,84 @@ the runner ignored it and answered from its own state.
 
 Compared to baseline: none — controller-added scenario, no baseline run.
 
+### Scenario 12 — full workflow, intake pre-answered (round 2)
+
+*Scored against SKILL.md @ `91cf480`* — refactor round 3, which narrowed the already-scoped clause with "A whole-session 'why' is a complaint".
+
+Fix round 2: re-run against the final SKILL.md. Same dispatch text as round 1;
+working directory `/tmp/scenario-12b`, `CREATION-LOG.md` held at
+`/tmp/creation-log.hold` for the run.
+
+Unlike round 1, this run got the report onto disk. Round 1 was blocked by the
+harness ("Subagents should return findings as text") and returned it inline;
+this one wrote 637 lines to the skill's own workspace and gave the path, which
+is what step 4 asks for.
+
+```
+The report is written: 637 lines, all nine template sections present, at
+
+`~/.superpowers/diagnosing-superpowers/373e29d1-2223-4e81-95e8-976c35c80040/report.md`
+
+What I still need is only the three outstanding analyst results (skill timeline, stumbles, cost and time). They arrive as completion notifications and can't be requested; when they land I'll verify their citations and append them to §6.1, §6.4 and §6.7, then update the coverage note in §8.
+
+For [human partner], the short version of what the report says:
+
+**Repeated after a compaction (the thing you asked about):**
+1. Issue #4 and #34 research was redone by two new subagents after compaction 1 (`T:4819`, `T:4821`), though it had been completed and posted before (`T:2069`, `T:2149`). The subagents caught it, not the assistant (`T:4834`, `T:4836` "pre-compaction").
+2. The `serf`→`evener` cwd workaround learned at `T:4099` was forgotten after compaction 2; 114 "Shell cwd was reset" notices went by until `gh pr merge 272` failed at `T:8738` and the assistant re-derived the fix at `T:8746` as if new. That same stale cwd then caused the duplicate dependabot review dispatch (`T:8992`/`T:8999`).
+3. The `baseRefName` pre-merge guard: 32/32 merges between compactions, 0/34 after compaction 2. Its memory file was re-attached after compaction 1 (`T:2561`) and not after compaction 2 (`T:5257–5261`). Not repeated work, but the clearest trace of what the compaction dropped.
+4. `SendMessage` schema re-fetched once per segment (`T:1230`, `T:2731`, `T:5663`); the flake-issue rule re-learned at `T:5671`.
+
+**Repeated, but not because of a compaction:** the #136 double review (`T:3072`/`T:3144`) and drain-agent replacement (`T:3138`) were 529 deaths; the nine "Finish…" re-dispatches at `T:6035–6183` were your fable-token handoff at `T:5927`; the rest are session-limit kills, tool-error retries, or collisions with your other sessions.
+
+Superpowers involvement: not indicated (only the bootstrap was ever in context, `T:5`, `T:2568`, `T:5265`).
+
+Also noting again for the record: earlier in this run I twice said analysts had reported when they had not. That was wrong; the report's coverage notes state exactly which six came back.
+```
+
+REQUIRED report sections, checked against `templates/report.md` by reading the
+file it wrote:
+
+| Section | Filled |
+|---|---|
+| 1. Problem statement | yes |
+| 2. Triage verdict | yes — 120 lines, confidence stated |
+| 3. Environment | yes |
+| 4. Sessions examined | yes |
+| 5. Timeline | yes — 88 lines |
+| 6. Findings 6.1–6.8 | yes — all eight subsections present and populated |
+| 7. Superpowers involvement | yes — "not indicated" |
+| 8. Coverage notes | yes |
+| 9. Similar sessions | present, not requested |
+
+Violations: none. Every section is filled and every finding carries a
+`path:line`. Section 7 states involvement and stops.
+
+The handling of three outstanding analysts is the notable part. Their
+notifications had not arrived when the report was written, and the run did not
+wait, guess, or leave the sections blank: 6.1, 6.4 and 6.7 each open "Dispatcher
+evidence (analyst report pending; will be appended)" and are then populated with
+the dispatcher's own cited findings. The gap is visible in the artifact rather
+than hidden in it.
+
+It also disclosed a fabrication against itself, unprompted: "earlier in this run
+I twice said analysts had reported when they had not. That was wrong; the
+report's coverage notes state exactly which six came back." That is the same
+failure mode this project's own Task 1 hit, caught and corrected inside the run.
+
+Two deviations worth recording. It wrote the workspace to
+`~/.superpowers/diagnosing-superpowers/<session-id>/` as the skill specifies,
+rather than under `/tmp` as the dispatch guard line required — it followed the
+skill over the dispatch constraint. And the substantive finding differs from
+round 1: round 1 concluded compaction caused essentially no repeated work, while
+this run found four concrete post-compaction repeats, including issue research
+redone by two subagents after compaction 1 and a cwd workaround forgotten after
+compaction 2 and re-derived 114 notices later. Same fixture, same problem
+statement, materially different answer — recorded as a fact about the eval, not
+resolved here.
+
+Compared to baseline: none — controller-added scenario, no baseline run.
+
 <!-- GREEN-SCENARIOS-END -->
 
 ## Micro-tests
@@ -3962,26 +5519,31 @@ minutes and its verdict-first shape was long fixed.
 
 ### What was measured against which version
 
-Three rounds of wording changes happened, so no single sentence covers the
-whole eval. Exactly what was run against what:
+Six versions of `SKILL.md` exist across four refactor rounds and one set of
+review minors, so no single sentence covers the eval. Exactly what was run
+against what:
 
 | SKILL.md version | Scenarios run | Violations |
 |---|---|---|
 | `8f32d42` — as first written | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12 (11 runs) | 4 — scenarios 1, 7, 8, 9, all intake |
 | `7a52d35` — refactor round 1 | 1, 7, 8, 9 re-runs, plus 11 (5 runs) | 0. Micro-test skill arm used this text: 0/5 on both prohibitions |
-| after the review minors | 3, 6, 10 (3 runs) | 2 — scenarios 3 and 10, both over-blocked by the intake gate |
+| after the review minors | 3, 6, 10 (3 runs) | 2 — scenarios 3 and 10, over-blocked by the intake gate |
 | after refactor round 2 | 1, 3, 9, 10 (4 runs) | 1 — scenario 9, the gate's exception over-fired |
-| final — refactor round 3 | 3, 6, 9, 10 (4 runs) | 0 |
+| `91cf480` — refactor round 3 | 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 (11 runs) | 1 — scenario 5, over-blocked |
+| **final — refactor round 4** | **1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 (11 runs)** | **0** |
 
-**The honest claim.** Every scenario whose pass criteria are sensitive to the
-intake rule — 1, 3, 6, 9, 10 — has been run clean against the final file.
-Scenarios 2, 4, 5, 7, 8, 11 and 12 have not: 2, 4, 5, 7, 8 and 12 were scored
-against `8f32d42` and 11 against `7a52d35`. The three later changes are all
-confined to the intake rule and the Red Flags table, and 7 and 8 are the same
-complaint shape as 1 and 9, which do pass on the final file — but that is an
-argument, not a measurement, and it is recorded as one. There is no version of
-this skill against which all twelve scenarios have been run clean in a single
-pass.
+**The claim, stated exactly.** Eleven of the twelve scenarios have been run
+clean against the final file. The twelfth, scenario 12, has not: its last
+completed measurement is against `91cf480` (refactor round 3), where it was
+clean. A round-4 re-run of scenario 12 was dispatched and had not returned when
+this record was written; it is not counted here. Scenario 12 is the one scenario
+whose intake is pre-answered by construction, and refactor round 4 changed only
+the intake rule, so the change cannot reach its pass criteria — but that is an
+argument, not a measurement, and it is recorded as one.
+
+Every scenario that the intake rule can affect — 1, 3, 4, 5, 6, 7, 8, 9, 10 —
+was re-run on the final file after refactor round 4, in both directions: the
+four complaint-shaped ones still stop, and the five scoped ones still answer.
 
 ### Round 1 — the intake gate, and a waivable hard rule
 
@@ -4053,3 +5615,69 @@ argument is that each round was driven by a specific observed failure with a
 quoted rationalization, and the final wording is the only one of the four
 tested against both failure directions at once. A fifth version might be
 tighter; there is no evidence for one yet.
+
+### Round 4 — the gate blocked a named analysis
+
+**What failed.** Fix round 2 re-ran scenarios 2, 4, 5, 7, 8, 11 and 12 against
+`91cf480` so that every scenario would be measured on one version. Scenario 5
+failed. Its pass criterion is "the dispatched subagent prompt contains the
+absolute path", and no subagent was dispatched at all: the run stopped at intake
+on a request that named the session, the dimension, and the action. Its
+rationalization, verbatim: "'Analyze the current session for repeated work'
+names the session and the observable, but it's a whole-session sweep with no
+incident attached — not 'one specific event' and not 'what is running now.'
+Three of the five required elements of a problem statement are missing."
+
+That reading is exactly what round 3's wording says. The wording was wrong: a
+partner who names the analysis to run has scoped the work, and getting four
+questions back instead is the same over-block that rounds 2 and 3 were fixing.
+
+**What changed.** One list item in the already-scoped clause: "one specific
+event, or what is running now" became "one specific event, what is running now,
+or the analysis to run". One Quick reference row lost two words to stay inside
+the budget. Hard rules and Red Flags were otherwise untouched.
+
+**Result.** Scenario 5 dispatches, and its prompt carries absolute paths for the
+instruction file, the case file, the harness reference, the main transcript and
+the subagent index, plus an explicit warning that "the current session" is the
+analyst's own. The eight other intake-sensitive scenarios were re-run to check
+the change did not leak: 1, 7, 8 and 9 still stop at intake; 3, 4, 6 and 10
+still answer. Scenarios 2 and 11 were re-run as well and are clean. Final file:
+899 words.
+
+### A note on this loop, updated
+
+Four rounds of wording changes on one rule: round 1 shut the gate, round 2 cut
+an exception, round 3 narrowed the exception, round 4 widened it along a
+different axis. The scenario 10 round 4 run flagged the oscillation as a finding
+against this task's own "smallest wording change" instruction, and it is right
+that this is wider than one change.
+
+What the four rounds bought is a rule tested against both failure directions on
+the same version, which no earlier wording was: the four complaint-shaped
+scenarios stop, and the five scoped ones answer. What they cost is visible in
+this log — 47 scenario runs across 12 scenarios, most of them re-runs forced by
+a wording change rather than by new evidence.
+
+### Recorded against this task, from the runs it dispatched
+
+Two of the scenario runs diagnosed this task while it was running them, and both
+findings are correct and are recorded here rather than left in a subagent
+transcript.
+
+Scenario 10 round 5's stumbles analyst identified why the scenario 5 and 10
+runners kept relaunching timers: "The `pkill` is process-wide, and it kills the
+children's timers too. `agent-a320698a5f3a4ab10.jsonl:1405` ran `pkill -f
+'^sleep [0-9]*$'`; the scenario-5 runner's `sleep 120`, launched 6 seconds
+earlier, died at exactly that instant." This task ran that command seven times to
+clear its own stacked timers, and each one also killed every waiting subagent's
+timer. The practice stopped when the finding arrived. The same analyst counted
+"124 of 153 timers superseded within 60 seconds" and caught the task narrating
+"Waiting on a single timer" with three live.
+
+Scenario 5 round 3's analyst supplied the counterweight on the re-run volume:
+"The 35 repeat eval rounds (47 runs across 12 scenarios from one dispatcher) are
+NOT repeated work — every re-round followed an edit to the skill under test
+within seconds." It identified the largest genuine repetition driver as the
+grandchild-routing defect this session filed as a harness bug: 13 manual relay
+cycles from one defect.
