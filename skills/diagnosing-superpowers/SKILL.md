@@ -9,8 +9,8 @@ description: Use when a superpowers session went wrong and your human partner wa
 
 Pin down with your human partner what went wrong in a session, read the
 transcripts on disk, and report what happened with evidence. You report;
-you do not diagnose superpowers. Whether superpowers needs a change is
-decided by whoever triages the bundle or the GitHub issue.
+you do not diagnose superpowers. Whoever triages the bundle or the issue
+decides whether superpowers changes.
 
 **Core principle:** Every finding cites `path:line`. No citation, no
 finding. Every number comes from the transcript or from a command you ran,
@@ -72,7 +72,7 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
 | "It took too long" | cost-and-time, stumbles |
 | "Why did it do this extra work?" | repeated-work, plan-adherence |
 | "Why is it so expensive?" | cost-and-time |
-| "What the hell is it doing?" (still running) | skill-timeline, timeline of the last turns; note in-progress in coverage |
+| "What the hell is it doing?" (still running) | skill-timeline; note in-progress in coverage |
 | "It ignored the plan" | plan-adherence, look at compaction lines first |
 | "Skill X never fired" | skill-timeline |
 
@@ -88,17 +88,23 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
   are not your partner's words. In a subagent transcript, "user" is the
   parent agent.
 - **No superpowers diagnosis.** Report §7 states involvement and stops.
-  Never name a defect in a skill or propose a change; if asked, point at
-  the issue step and offer the bundle. No advice to your partner either.
+  Never name a defect in a skill or propose a change. Pushing does not
+  waive this; point at the issue step and offer the bundle. No advice to
+  your partner either.
 - **Approval gates.** No archive before your partner has seen the scrub
   log and file list. No issue or comment before they approve the exact
   text.
+- **Intake before analysis.** Nothing in steps 2–7 starts until your
+  partner has answered. If they are away, write the questions and stop.
+  A statement you reconstructed for them is not an answer.
 
 ## Red Flags
 
 | Thought | Reality |
 |---------|---------|
 | "The problem is obvious, skip intake" | The problem statement scopes everything. Ask. |
+| "They're away, so I'll reconstruct the statement" | You cannot reconstruct what they wanted. Write the questions and stop. |
+| "I'll sweep everything now and ask at the end" | An unscoped sweep spends their budget on the wrong question. Ask first. |
 | "Small, targeted edit, no restructuring needed" | Not your call, however small. Report the evidence; the triager decides. |
 | "One candidate obviously matches, no need to list the rest" | Every candidate you rejected goes in the report, with the reason. |
 | "The price per token is well known" | Numbers you did not compute from the transcript are invented. Cite or drop. |
