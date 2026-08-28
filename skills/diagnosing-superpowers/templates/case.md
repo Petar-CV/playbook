@@ -31,7 +31,7 @@ Session still running at read time: yes | no (mtime <ISO>, lines <N>)
 - Skill files read or injected during the session:
 
 | File (relative to install root) | sha1 (current file) | mtime newer than session? |
-|---|---|
+|---|---|---|
 
 - Other plugins / extensions / MCP servers configured: <list, or "none found">
 - Instruction files present (paths only): <list>
