@@ -56,7 +56,7 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
    redaction level: skeleton, evidence, or full. Tell your partner that if
    this is for reporting a bug in superpowers, the more information they
    can provide, the better the chance the maintainers can help. Build the
-   bundle per `templates/bundle-README.md`, run `prompts/scrub.md`, then
+   bundle per `templates/bundle-README.md`, dispatch `prompts/scrub.md`, then
    `prompts/scrub-audit.md`, repeating both until the audit returns CLEAN.
    Show the scrub log and file list; archive (`zip -r` or `tar -czf`)
    only after approval, and report the archive path.
@@ -96,7 +96,10 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
   text.
 - **Intake before analysis.** Nothing in steps 2–7 starts until your
   partner has answered. If they are away, write the questions and stop.
-  A statement you reconstructed for them is not an answer.
+  A statement you reconstructed for them is not an answer. An
+  already-scoped request — one specific event, or what is running now —
+  is itself the statement: answer it, then ask. A whole-session "why" is
+  a complaint.
 
 ## Red Flags
 
@@ -106,5 +109,4 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
 | "They're away, so I'll reconstruct the statement" | You cannot reconstruct what they wanted. Write the questions and stop. |
 | "I'll sweep everything now and ask at the end" | An unscoped sweep spends their budget on the wrong question. Ask first. |
 | "Small, targeted edit, no restructuring needed" | Not your call, however small. Report the evidence; the triager decides. |
-| "One candidate obviously matches, no need to list the rest" | Every candidate you rejected goes in the report, with the reason. |
 | "The price per token is well known" | Numbers you did not compute from the transcript are invented. Cite or drop. |
