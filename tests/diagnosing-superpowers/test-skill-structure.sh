@@ -106,11 +106,11 @@ for rel in "${expected_files[@]}"; do
 done
 
 # --- no local paths or names in shipped files ----------------------------
-leaks="$(grep -rn -E '/Users/|/home/|jesse' "$SKILL_DIR" 2>/dev/null || true)"
+leaks="$(grep -rn -E '/Users/|/home/|jesse' "$SKILL_DIR" "$SCRIPT_DIR" --exclude=test-skill-structure.sh 2>/dev/null || true)"
 if [ -z "$leaks" ]; then
-  pass "no machine-specific paths or names in shipped files"
+  pass "no machine-specific paths or names in shipped files (skills + tests)"
 else
-  fail "no machine-specific paths or names in shipped files"
+  fail "no machine-specific paths or names in shipped files (skills + tests)"
   printf '%s\n' "$leaks" | head -10 | sed 's/^/    /'
 fi
 
