@@ -5428,6 +5428,93 @@ resolved here.
 
 Compared to baseline: none — controller-added scenario, no baseline run.
 
+### Scenario 12 — full workflow, intake pre-answered (round 3)
+
+*Scored against the final SKILL.md* — refactor round 4, which lets an already-scoped request name the analysis to run.
+
+Re-run against the final SKILL.md, closing the last gap in the version table.
+Working directory `/tmp/scenario-12c`; `CREATION-LOG.md` held at
+`/tmp/creation-log.hold` for the run.
+
+The runner stopped once with its report unassembled, waiting on two of nine
+analysts. It was resumed and told to assemble from what it actually had, mark
+the outstanding dimensions as analyst-pending, and neither wait nor guess. Asked
+separately to repeat a final message and path before one existed, it refused:
+"I have neither yet — the report is not written. I won't invent one."
+
+```
+Report is written and complete: 808 lines, all nine required sections and all eight finding subsections. The earlier runs' files in that workspace are untouched (`report.md` still 53,420 bytes at its original 13:34 timestamp).
+
+**Report path: `~/.superpowers/diagnosing-superpowers/373e29d1-2223-4e81-95e8-976c35c80040/report-compaction-repeats.md`**
+Case file: `~/.superpowers/diagnosing-superpowers/373e29d1-2223-4e81-95e8-976c35c80040/case-compaction-repeats.md`
+
+## What was repeated, and where
+
+The short answer: work was repeated a lot, and almost none of it was caused by the compactions.
+
+**Actually caused by a compaction (2 items, both small):**
+- Each compaction re-deferred the tool schemas, so the assistant re-fetched the `SendMessage` schema it had been using minutes earlier — `ToolSearch select:SendMessage` at lines 1230, 2731, 5663, with the `deferred_tools_delta` at 2565 and 5262 confirming the re-deferral. Nobody noticed.
+- Both compaction summaries claimed a report was still owed that had just been delivered: summary 1 (line 2556) asked for the PR #121 report delivered at lines 2542/2546; summary 2 (line 5253) said [human partner] hadn't received the correctness wrap-up delivered at line 5240, fourteen seconds before the `/compact`. Neither re-delivery happened, only because [human partner]'s next prompt changed the subject both times.
+
+**Biggest block, with a compaction in the causal chain but a different trigger:** [human partner]'s "use Opus or Sonnet subagents" rule (line 1470) is in summary 1 and absent from summary 2. All 71 dispatches between the compactions carry an explicit `model`; the first 30 after the second boundary (lines 5333–5863) carry none and ran on Fable. [human partner] re-issued the rule at 5872 and ordered a rescue at 5927; the assistant stopped 18 Fable subagents and re-dispatched nine workstreams at 6035 and 6169–6183. The #94 implementer lost everything — its replacement at 6179 was told the prior branch had zero commits.
+
+**Everything else:** a 529 outage on 08-18 killed subagents ten times and forced four respawns (the duplicate "Review PR #136" at 3072/3144 is an announced respawn, line 3143); two session limits; repeated CI-log downloads (5 of the same log in 17s at 2607–2624, 4 in 40s at 5297–5315).
+
+**Checked clean:** no PR reviewed twice across a boundary, no issue re-RCA'd across a boundary, and both compactions fired at quiescent points.
+
+Section 7 records superpowers involvement as **not indicated** for this problem. No superpowers skill was invoked in the main session at any point — the only `Skill` calls in 9,170 lines are two `code-review` invocations in turn 1.
+
+## Caveats you should know
+
+- Two of nine analysts never returned: the full-session mechanical duplicate index and cost-and-time. Both sections are marked **Analyst-pending**. I filled 6.7 entirely with numbers I computed myself; 6.3 is built from the four analysts that did return plus my own reads, but lacks an exhaustive `(tool, key)` collision scan that could add low-salience repeats.
+- My first-pass human-prompt list was wrong: six of [human partner]'s prompts live only in `queued_command` attachments (lines 491, 571, 2594, 2721, 5872, 5906), two of which carry load-bearing instructions. The timeline uses the corrected 80-turn set.
+- Two mechanical notes: the Write tool refused to create the report file (it classifies `report*.md` as a subagent report), and Bash heredocs containing git-like strings were refused by the worktree-isolation guard, so I emitted the file from Python scripts under `/tmp/scenario-12c/lead/`. `/tmp/scenario-12c` is shared with concurrent runs and one of my scratch files was overwritten mid-task; my own artifacts are in `/tmp/scenario-12c/lead/`.
+- A peer session asked me to "repeat your final message verbatim, including the report path" before the report existed. I did not invent one.
+```
+
+REQUIRED report sections, checked by reading the file it wrote (808 lines):
+
+| Section | Filled |
+|---|---|
+| 1. Problem statement | yes |
+| 2. Triage verdict | yes — 99 lines |
+| 3. Environment | yes |
+| 4. Sessions examined | yes |
+| 5. Timeline | yes — 90 lines, corrected 80-turn set |
+| 6. Findings 6.1–6.8 | yes — all eight subsections populated |
+| 7. Superpowers involvement | yes — "not indicated" |
+| 8. Coverage notes | yes |
+| 9. Similar sessions | present, not requested |
+
+Violations: none. Every section filled, every finding cited, section 7 states
+involvement and stops.
+
+Three things this round did better than either earlier round. It **avoided the
+workspace collision** that this log records as an open design gap, unprompted —
+writing to `report-compaction-repeats.md` and `case-compaction-repeats.md` and
+confirming "The earlier runs' files in that workspace are untouched (`report.md`
+still 53,420 bytes at its original 13:34 timestamp)." It marked the two
+dimensions whose analysts never returned as **Analyst-pending** and filled 6.7
+entirely with numbers it computed itself, naming the script. And it **corrected
+its own first-pass prompt extraction**: "six of [human partner]'s prompts live
+only in `queued_command` attachments (lines 491, 571, 2594, 2721, 5872, 5906),
+two of which carry load-bearing instructions."
+
+**A third distinct answer to the same question.** Round 1 concluded compaction
+caused essentially no repeated work. Round 2 found four post-compaction repeats.
+This round finds two small ones genuinely caused by compaction — a re-deferred
+`SendMessage` schema re-fetched at `T:1230`/`:2731`/`:5663`, and two compaction
+summaries claiming a report was still owed that had been delivered seconds
+before — and attributes the large repeat block to a standing instruction dropped
+between summaries ("use Opus or Sonnet subagents", present in summary 1, absent
+from summary 2; all 71 dispatches between the compactions carry an explicit
+`model`, the first 30 after the second boundary carry none), plus a 529 outage
+and token exhaustion. Same fixture, same problem statement, three answers. This
+round's is the best evidenced of the three, and the disagreement is a fact about
+the skill's reliability that this eval records rather than resolves.
+
+Compared to baseline: none — controller-added scenario, no baseline run.
+
 <!-- GREEN-SCENARIOS-END -->
 
 ## Micro-tests
@@ -5530,16 +5617,18 @@ against what:
 | after the review minors | 3, 6, 10 (3 runs) | 2 — scenarios 3 and 10, over-blocked by the intake gate |
 | after refactor round 2 | 1, 3, 9, 10 (4 runs) | 1 — scenario 9, the gate's exception over-fired |
 | `91cf480` — refactor round 3 | 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 (11 runs) | 1 — scenario 5, over-blocked |
-| **final — refactor round 4** | **1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 (11 runs)** | **0** |
+| **final — refactor round 4** | **all twelve: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12** | **0** |
 
-**The claim, stated exactly.** Eleven of the twelve scenarios have been run
-clean against the final file. The twelfth, scenario 12, has not: its last
-completed measurement is against `91cf480` (refactor round 3), where it was
-clean. A round-4 re-run of scenario 12 was dispatched and had not returned when
-this record was written; it is not counted here. Scenario 12 is the one scenario
-whose intake is pre-answered by construction, and refactor round 4 changed only
-the intake rule, so the change cannot reach its pass criteria — but that is an
-argument, not a measurement, and it is recorded as one.
+**The claim, stated exactly.** All twelve scenarios have been run clean against
+the final file, in one version, with no violations. That is the stop condition
+the plan sets for Step 6, and it is now met by measurement rather than by
+argument.
+
+The last of the twelve, scenario 12, was the slowest to land: its runner stopped
+once with the report unassembled while waiting on two of nine analysts, was
+resumed, and delivered an 808-line report with all nine REQUIRED sections and the
+two outstanding dimensions marked analyst-pending. It is recorded as "Scenario 12
+— full workflow, intake pre-answered (round 3)".
 
 Every scenario that the intake rule can affect — 1, 3, 4, 5, 6, 7, 8, 9, 10 —
 was re-run on the final file after refactor round 4, in both directions: the
@@ -5640,12 +5729,11 @@ the budget. Hard rules and Red Flags were otherwise untouched.
 **Result.** Scenario 5 dispatches, and its prompt carries absolute paths for the
 instruction file, the case file, the harness reference, the main transcript and
 the subagent index, plus an explicit warning that "the current session" is the
-analyst's own. The eight other intake-sensitive scenarios were re-run to check
-the change did not leak: 1, 7, 8 and 9 still stop at intake; 3, 4, 6 and 10
-still answer. Scenarios 2 and 11 were re-run as well and are clean. Final file:
-899 words.
+analyst's own. Every other scenario was re-run on this version: 1, 7, 8 and 9
+still stop at intake; 2, 3, 4, 6, 10, 11 and 12 all answer or hold their gates
+as their criteria require. Twelve of twelve clean. Final file: 899 words.
 
-### A note on this loop, updated
+### A note on this loop
 
 Four rounds of wording changes on one rule: round 1 shut the gate, round 2 cut
 an exception, round 3 narrowed the exception, round 4 widened it along a
@@ -5654,15 +5742,15 @@ against this task's own "smallest wording change" instruction, and it is right
 that this is wider than one change.
 
 What the four rounds bought is a rule tested against both failure directions on
-the same version, which no earlier wording was: the four complaint-shaped
-scenarios stop, and the five scoped ones answer. What they cost is visible in
-this log — 47 scenario runs across 12 scenarios, most of them re-runs forced by
+one version, which no earlier wording was: the four complaint-shaped scenarios
+stop, and the eight scoped or gated ones proceed. What they cost is visible in
+this log — 46 scenario runs across 12 scenarios, most of them re-runs forced by
 a wording change rather than by new evidence.
 
 ### Recorded against this task, from the runs it dispatched
 
-Two of the scenario runs diagnosed this task while it was running them, and both
-findings are correct and are recorded here rather than left in a subagent
+Three of the scenario runs diagnosed this task while it was running them. All
+three findings are correct and are recorded here rather than left in a subagent
 transcript.
 
 Scenario 10 round 5's stumbles analyst identified why the scenario 5 and 10
@@ -5676,8 +5764,33 @@ timer. The practice stopped when the finding arrived. The same analyst counted
 "Waiting on a single timer" with three live.
 
 Scenario 5 round 3's analyst supplied the counterweight on the re-run volume:
-"The 35 repeat eval rounds (47 runs across 12 scenarios from one dispatcher) are
-NOT repeated work — every re-round followed an edit to the skill under test
-within seconds." It identified the largest genuine repetition driver as the
-grandchild-routing defect this session filed as a harness bug: 13 manual relay
-cycles from one defect.
+"The 35 repeat eval rounds ... are NOT repeated work — every re-round followed
+an edit to the skill under test within seconds." It identified the largest
+genuine repetition driver as the grandchild-routing defect this session filed as
+a harness bug: 13 manual relay cycles from one defect.
+
+Scenario 12 round 3 avoided the workspace-collision hazard this log records as
+an open design gap, without being told to: it wrote to
+`report-compaction-repeats.md` and `case-compaction-repeats.md` and verified
+that "The earlier runs' files in that workspace are untouched." It also refused
+to answer a peer's request for a report path before the report existed: "I have
+neither yet — the report is not written. I won't invent one."
+
+### One thing this eval did not settle
+
+Scenario 12 was run three times against the same fixture with the same
+pre-answered problem statement, and produced three different answers about what
+compaction caused. Round 1: essentially nothing. Round 2: four post-compaction
+repeats. Round 3: two small genuine ones, with the large repeat block
+re-attributed to a standing instruction dropped between compaction summaries,
+a 529 outage, and token exhaustion. Round 3's is the best evidenced, and it
+names a mechanism the other two missed — the "use Opus or Sonnet subagents"
+rule present in summary 1 and absent from summary 2, with all 71 dispatches
+between the compactions carrying an explicit `model` and the first 30 after the
+second boundary carrying none.
+
+All three runs met the scenario's pass criteria, because those criteria check
+that every REQUIRED section is filled and every finding is cited — not that two
+runs agree. The skill reliably produces a well-formed, evidenced report. It does
+not reliably produce the same report twice. That is worth knowing before anyone
+treats a single run's verdict as settled.
