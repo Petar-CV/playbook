@@ -92,7 +92,7 @@ description: Use when a superpowers session went wrong and the user wants
 ```
 
 Triggering conditions only; no workflow summary (see `writing-skills`,
-Skill Discovery Optimization). SKILL.md stays under roughly 500 words:
+Skill Discovery Optimization). SKILL.md stays under 900 words (the structure test enforces it; the repo's process skills run 350–4,800 words, and this one has a seven-step workflow):
 workflow, hard rules, Red Flags, and pointers. Everything else lives in
 the prompt, reference, and template files.
 
