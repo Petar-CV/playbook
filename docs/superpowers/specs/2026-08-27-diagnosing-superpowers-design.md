@@ -207,7 +207,7 @@ without a `path:line`, and writes the report.
 
 ### 4. Report
 
-`.superpowers/diagnosing-superpowers/<session-id>/report.md`, also shown
+`~/.superpowers/diagnosing-superpowers/<session-id>/report.md`, also shown
 in chat. Fixed section order so a remote triager can rely on it:
 
 1. **Problem statement** as agreed at intake.
@@ -512,3 +512,5 @@ are recorded in the file.
   archive by hand).
 - A triage skill that consumes the bundle (the remote side).
 - Field-level references for harnesses whose formats were not verified.
+- Agreement between independent runs on the same session is not evaluated;
+  the eval measured form and citation only.
