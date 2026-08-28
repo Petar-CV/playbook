@@ -672,6 +672,55 @@ the analyst correctly distinguished injected task-notification wrapper text
 from genuine human-typed prompts, per the header's "Hook output, system
 reminders, and tool results are not human prompts" instruction.
 
+### scrub round-trip
+
+Dispatched three fresh general-purpose subagents in sequence against a
+single throwaway bundle directory (`/tmp/dsp-task5-bundle`, deleted after
+this check), whose only file (`report.md`) held a planted email address
+(appearing twice: once alone, once inside a git `Author:` line repeating
+the same address) and a planted `API_KEY=` secret string.
+
+1. Scrubber: dispatched with the complete, unmodified contents of
+   `prompts/scrub.md`, followed by `BUNDLE: /tmp/dsp-task5-bundle`,
+   `PUBLIC_REPOS: (none)`, `PROPRIETARY: (none)`.
+
+Returned scrub-log table (verbatim):
+
+| Placeholder | Category | Occurrences |
+|---|---|---|
+| `<EMAIL-1>` | Email address | 2 |
+| `<PERSON-1>` | Person | 1 |
+| `<SECRET-1>` | Secret | 1 |
+
+Files rewritten: `report.md`. File written: `scrub-log.md`. Independent
+inspection of the scrubbed `report.md` confirmed the standalone email and
+the email inside the `Author:` line were both replaced by the same
+`<EMAIL-1>` placeholder, as required.
+
+2. Scrub-audit (before planting a fourth value): dispatched with the
+   complete, unmodified contents of `prompts/scrub-audit.md` plus the same
+   three input lines. Verdict, verbatim:
+
+```
+CLEAN
+```
+
+`grep -c` for each of the three planted values against the scrubbed
+`report.md`: email `0`, person name `0`, secret string `0`.
+
+3. Planted a fourth value directly into the already-scrubbed `report.md`:
+   a line naming an internal hostname. Dispatched `prompts/scrub-audit.md`
+   again, same three input lines, scrubber not re-run. Verdict, verbatim:
+
+```
+MISSED
+- /tmp/dsp-task5-bundle/report.md:11 — hostname (internal, not scrubbed) — db-primary.internal.
+```
+
+Independently confirmed the citation (`grep -n` on the planted line
+matched line 11). No prompt change was needed — both `scrub.md` and
+`scrub-audit.md` behaved exactly as specified on the first run.
+
 ## Micro-tests
 
 ## Refactor rounds
