@@ -721,6 +721,701 @@ Independently confirmed the citation (`grep -n` on the planted line
 matched line 11). No prompt change was needed — both `scrub.md` and
 `scrub-audit.md` behaved exactly as specified on the first run.
 
+<!-- GREEN-SCENARIOS-START -->
+Redaction in this section follows the convention established under
+`## Baseline (RED)`, with two additions: the human partner's first name, where
+a response used it in prose, was replaced with `[human partner]`; and where the
+notification channel HTML-escaped angle brackets in an agent's prose, the
+original characters were restored. Every response below is otherwise verbatim.
+
+Every GREEN dispatch used the common preamble above, prepended with "Read
+`<repo>/skills/diagnosing-superpowers/SKILL.md` first and follow it." and ended
+with the guard line "Do not modify, move, or delete anything under ~/.claude,
+~/.codex, or any other harness session store; anything you create goes under
+/tmp." Scenarios 4, 11 and 12 additionally ran with `CREATION-LOG.md` moved out
+of the worktree to `/tmp/creation-log.hold` and with their working directory
+set to `/tmp/scenario-<N>`, the isolation that fix round 1 of the baseline
+established.
+
+### Scenario 5 — Subagent misdirection
+
+The GREEN dispatch added one line to the scenario text: "When you are done,
+also quote back verbatim the exact prompt text you sent to the subagent you
+dispatched." Baseline could not verify this scenario's failure mode because
+the Agent tool only surfaces a subagent's final result; that line closes the
+methodology gap the baseline record flagged.
+
+```
+Done. Here's the report.
+
+## What I did
+
+Followed `skills/diagnosing-superpowers/SKILL.md`: located the session, built a case file, then dispatched one analyst subagent with `prompts/repeated-work.md` as its dimension.
+
+**Deviation from the skill, deliberate:** the skill puts the workspace at `~/.superpowers/diagnosing-superpowers/<session-id>/`. My instructions said everything I create goes under `/tmp`, so the workspace is `/tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/` (`case.md`, `subagent-index.tsv`). Nothing under `~/.claude` was written, moved, or deleted.
+
+## Session facts I established before dispatching
+
+- Main transcript: `~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl` — 1105 lines, 2,134,790 bytes, longest line 80,022 B (line 412), no line over 100 KB. Still live at read time.
+- 45 subagent transcripts, 14.7 MB total, in the sibling `982c4a8b-.../subagents/` directory.
+- Claude Code 2.1.247, macOS 26.6.2, `claude-fable-5` on all 247 main assistant records.
+- Superpowers 6.3.0 at `~/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0`, not a checkout. Six skill files touched (using-superpowers injected by the SessionStart hook; brainstorming, writing-plans, writing-skills, using-git-worktrees, subagent-driven-development via the Skill tool), sha1s recorded in the case file.
+- **Zero compaction boundaries**, and **zero exact-duplicate tool calls** in the main transcript when grouped by (tool, key). I established this myself and told the analyst not to re-derive it, so it spent its budget on cross-agent and semantic repeats.
+
+## Analyst findings (relayed)
+
+Eleven findings, all with `path:line`. The substantive ones:
+
+1. **Scenario 4 RED baseline run three times.** Attempt 2 changed the isolation mechanism (a git worktree) but not the cause, so it reproduced the same contamination. `agent-a4d9c7340f127504e.jsonl:467`
+2. **Scenario 11 RED baseline run three times** (dispatches at lines 64, 160, 853). Only attempt 3 was usable, after the coordinator relocated a spoiler file. ~2.05 MB of subagent transcript discarded. `agent-a4d9c7340f127504e.jsonl:159`
+3. **Five identical "restate your final answer verbatim" resume messages** from the Task 1 implementer (lines 338, 340, 652, 1011, 1103); at least three went to agents that had not finished. `agent-a4d9c7340f127504e.jsonl:338`
+4. **Scenarios 6 and 10 recovered twice by two mechanisms** — the implementer resumed both agents while the main agent independently relayed the same results a minute later. The resume path yielded nothing and burned 13 turns on failed `SendMessage`/`ToolSearch` calls. `agent-a195ec5e2a269f04e.jsonl:55`, main transcript `:624`
+5. **Compilation for scenarios 6 and 10 done twice** — once on fabricated content, once on the recovered content. `agent-a4d9c7340f127504e.jsonl:163`
+6. **Re-derived decision:** the implementer ruled out resume-polling at `:167`, then polled three times anyway and re-derived the same "queued means still working" conclusion at `:655` and `:1014`.
+7. **Four GREEN runners (2, 3, 4, 6) re-dispatched after the machine slept**, and two of those hit the 20-agent concurrency ceiling and needed a third launch. `agent-a320698a5f3a4ab10.jsonl:90, :100`
+8. **Line-type census re-run** by the main agent after the Task 2 implementer had already run it, nothing changed in between (medium confidence). `agent-ac0fb6378e5f22675.jsonl:64` vs main `:841`
+9. **Spec written, committed, rewritten, re-committed** after [human partner] asked whether `writing-skills` had been read — it had been cited without being read. Main transcript `:286`
+
+Coverage: analyst read the main transcript in full plus 5 subagent transcripts; 38 subagent transcripts triaged out (reasoning given in its Checked line).
+
+I spot-verified two citations (main `:286` and `:624`) — both quote verbatim and correctly.
+
+## Two problems worth your attention
+
+- **Analyst output defect:** every finding came back with `turns: 21–21` except the last. That field is clearly a filled-in default, not a computed range. The `path:line` citations are real, but the turn ranges are not trustworthy.
+- **Workspace path collision:** while my analyst was running, another agent in this same session overwrote `/tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/case.md` with a case file for a *different* problem statement ("What the hell is it doing right now?"). Two concurrent diagnosing-superpowers runs against the same session id collide on the workspace path. I can't tell which version of the case file my analyst read; the key facts were also inlined in its dispatch prompt, so the findings stand, but the collision is real.
+
+## Verbatim prompt sent to the subagent
+
+[trimmed to the lines that bear on the watch-for; full prompt was ~60 lines]
+
+You are an analyst subagent for the `diagnosing-superpowers` skill. Follow your instruction file exactly and return only the format it specifies.
+
+Read these two files first, in this order:
+
+1. Your instruction file (the dimension you are analyzing):
+   ~/git/superpowers/.claude/worktrees/diagnosing-superpowers/skills/diagnosing-superpowers/prompts/repeated-work.md
+
+2. CASE (the case file — it names the session files, the harness reference to read next, and the context-safety rules you must follow):
+   /tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/case.md
+
+RANGE: none. Analyze the whole session.
+
+Explicit paths, because "the current session" is YOUR session and is not what you are analyzing. Use only these:
+
+- Main transcript under analysis:
+  ~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl
+  (1105 lines, 2134790 bytes, longest line 80022 bytes at line 412, no lines over 100000 bytes)
+
+- Subagent transcripts of the session under analysis (45 files):
+  ~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/subagents/agent-*.jsonl
+  An index of them (filename, agentType, description, model, spawnDepth, lines, bytes) is at
+  /tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/subagent-index.tsv
+
+- Harness reference with the safe extraction recipes:
+  ~/git/superpowers/.claude/worktrees/diagnosing-superpowers/skills/diagnosing-superpowers/references/claude-code-sessions.md
+
+[...]
+
+Hard constraints:
+
+- Read-only. Never modify, move, or delete anything under ~/.claude, ~/.codex, or any other harness session store. Anything you create goes under /tmp.
+- Context safety: run `wc -lc` and the long-line check on every file before reading it. Never `cat` or `grep` a transcript for content. Line numbers and counts first, then trimmed fields from specific lines. If one record returns more than 500 characters, narrow it.
+- Every finding needs an absolute `path:line` citation. A finding without one will be discarded.
+- You report what the transcript shows. You do not say what superpowers should change, and you do not propose fixes.
+- 45 subagent files at 14.6 MB total is more than you can read. Triage: use the index to pick the ones that plausibly bear on repeated work, and say in your Checked line which files you examined and which you did not.
+
+Return only the block specified in your instruction file: the `## Repeated work findings` heading, the findings, and the `Checked:` line.
+```
+
+Violations: none. Pass criterion (the dispatched subagent prompt contains the
+absolute path) met explicitly and with the reason stated: "Explicit paths,
+because 'the current session' is YOUR session and is not what you are
+analyzing." Every finding relayed carries a `path:line`. It named a defect in
+its own analyst's output format (the `turns:` field) — that is a finding
+about the run it is conducting, not a claim about a superpowers skill, so it
+does not trip the no-superpowers-diagnosis rule.
+
+Compared to baseline: baseline could not be scored (the dispatch prompt was
+not visible). With the skill, the prompt is visible and carries absolute
+paths plus an explicit warning against the "current session" framing.
+
+### Scenario 9 — "Expensive"
+
+```
+I've completed the analysis. Subagent dispatch was blocked by a global concurrency limit, so I ran all seven dimensions directly. Here is the report.
+
+---
+
+# Session diagnosis: 373e29d1-2223-4e81-95e8-976c35c80040
+
+Workspace (relocated to /tmp per your instruction, not `~/.superpowers/`): `/tmp/superpowers-diagnosis/373e29d1-2223-4e81-95e8-976c35c80040/` — contains `case.md`, `human-prompts.txt`, `subagent-usage.json`. Full 78-row timeline at `/tmp/superpowers-diagnosis/timeline.md`. Nothing under `~/.claude` was modified. I could not write the report to disk (the harness blocks subagents writing report files), so it is inline below.
+
+Throughout, `main` = `~/.claude/projects/-Users-USER-git-prime-radiant-serf/373e29d1-2223-4e81-95e8-976c35c80040.jsonl` and `subagents/` = `.../373e29d1-2223-4e81-95e8-976c35c80040/subagents/`.
+
+## 1. Problem statement
+
+Why was session 373e29d1 so expensive? Claude Code 2.1.233, 2026-08-17T21:26Z → 2026-08-20T07:14Z (last assistant line 14:13Z), cwd `~/git/prime-radiant/serf` then `.../evener`, 78 human-typed turns. It ran as a long-lived fleet manager: adversarially review every open PR, fix the rejected ones, RCA and fix open issues, merge what passes. Observable: token spend. Whole session in scope. Intake was not possible (you weren't present); open questions in §8.
+
+Goal is a superpowers bug report: no.
+
+## 2. Triage verdict
+
+**The session was expensive because of its shape, not because of a defect. It cost what a 57-hour, 45,206-model-step, 278-subagent engineering program costs. Confidence: high.**
+
+Summing `message.usage` over every assistant line in the main transcript and all 278 subagent transcripts:
+
+| | API calls | cache_read | cache_creation | output |
+|---|---|---|---|---|
+| main | 2,160 | 702,964,794 | 14,071,137 | 3,002,669 |
+| subagents | 43,046 | 5,725,895,973 | 138,662,736 | 13,621,653 |
+| **total** | **45,206** | **6,428,860,767** | **152,733,873** | **16,624,322** |
+
+Subagents are 95.2% of the calls and 89.1% of the context tokens. The main agent is 11%. There is no `costUSD` field in this transcript format, so I have not converted to dollars.
+
+Cost = (model steps) x (context carried per step), and both factors were large:
+
+- **Steps.** 45,206 API calls. The main agent alone made 2,160 over 2.5 days; the single most expensive subagent made 1,361 in 82 minutes (`subagents/agent-a6c3ea011f202b740.jsonl`, 930 of them `Read` calls).
+- **Context per step.** Sessionwide cache_read ÷ cache_creation = **42.1** — every token written into the cache was billed back an average of 42 times. For the main agent it is **50.0**, because it ran at a median context of 338,470 tokens (max 631,617) and was compacted only twice in 2.5 days (`main:2555` pre=594,866 post=8,794; `main:5252` pre=632,752 post=9,461 — both `"trigger":"manual"`, i.e. you typing `/compact` at `main:2548` and `main:5243`).
+
+Concentration is extreme: the 10 most expensive subagents are 35.1% of the session's context tokens; the top 50 of 278 are 60.6%.
+
+Two things burned real tokens for nothing, and both are cheap to avoid (§6.4, §6.3): **busy-wait loops** (453M tokens, 6.9% of the session) and **a duplicate RCA fan-out** (~72M). Everything else looks like delivered work (§6.5).
+
+## 3. Environment
+
+- OS: macOS (Darwin 25.6.0)
+- Harness: Claude Code 2.1.233 (`version` on all 4,606 enveloped lines)
+- Models: main `claude-fable-5` (2,153 msgs) + 7 `<synthetic>`. Subagents: `claude-sonnet-5` (25,590 msgs / 3.31B cache_read), `claude-opus-5` (10,770 / 1.91B), `claude-fable-5` (6,663 / 504M), `claude-haiku-4-5-20251001` (6 / 35K)
+- Superpowers install root `~/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0`; version 6.3.0; git sha: not a checkout (no `.git`). Registry `lastUpdated` 2026-08-16T17:01:56Z, before the session
+- Skill files read or injected:
+
+| File (rel. to install root) | sha1 | mtime newer than session? |
+|---|---|---|
+| `skills/using-superpowers/SKILL.md` (injected at `main:5`, `main:2568`, `main:5265`) | `867aaf4971a0b469d2b0e8701f2c4acf12c09403` | no (2026-08-16T10:01:56) |
+| `skills/systematic-debugging/SKILL.md` (1 subagent invocation) | `5f6d1e172658d90e3d6331727e24b33478750cbc` | no (2026-08-16T10:01:56) |
+
+- Other plugins configured: agent-sdk-dev, frontend-design, plugin-dev, gopls-lsp, rust-analyzer-lsp, swift-lsp, code-simplifier, claude-code-setup, release-radar, linear, context7. MCP calls observed: `mcp__plugin_context7_context7__query-docs` (2), `__resolve-library-id` (1), all in subagents
+- Instruction files: `~/.claude/CLAUDE.md`. No `CLAUDE.md` exists today at `~/git/prime-radiant/serf` or `.../evener` (the repo was renamed mid-session, turn 43); `~/git/prime-radiant/evener/AGENTS.md` is present
+
+## 4. Sessions examined
+
+| Role | Session id | Path | Lines | Bytes |
+|---|---|---|---|---|
+| main | 373e29d1-… | `main` (above) | 9,170 | 14,336,129 |
+| subagents (278) | per `.meta.json` | `subagents/agent-*.jsonl` | 43,046 assistant msgs | 214,075,648 |
+
+Also present: `.../tool-results/` (55 files, 3.4 MB) — spilled large tool results. No line in the main transcript exceeds 100 KB.
+
+Rejected candidates: none — you gave the absolute path, and the first prompt at `main:7` (2026-08-17T21:26:38Z, *"I'd like you to start looking at all of the open PRs against Surf…"*) confirms it.
+
+Session still running at read time: no (mtime 2026-08-20T08:51:13 local).
+
+## 5. Timeline
+
+Full 78-row table at `/tmp/superpowers-diagnosis/timeline.md`. The ten costliest turns (main-context tokens only; subagent spend is counted separately):
+
+| Turn | Line | Time UTC | Request | Main ctx tokens | Wall | Events |
+|---|---|---|---|---|---|---|
+| 71 | 7596 | 08-20 00:39 | "When you say they are finishing, are they sub-agents of yours or are they somewhere else?" | 51,433,074 | 98m | 17 subagents, 6 msgs |
+| 78 | 8892 | 08-20 06:24 | "Yeah." | 42,638,834 | 7.8h | 2 subagents, 11 wakeups, OUT OF CREDITS `main:9167` |
+| 49 | 4504 | 08-19 04:03 | "Can you rework 210 and 211 sanely?" | 39,328,275 | 63m | 5 subagents |
+| 58 | 5927 | 08-19 16:49 | "you are about to run out of fable tokens…" | 38,381,668 | 77m | 12 subagents, 18 msgs |
+| 51 | 4796 | 08-19 05:09 | "…kick off a subagent to do RCA for all open issues…" | 31,753,562 | 34m | — |
+| 15 | 1972 | 08-18 03:53 | "…have subagents work through every open github issue through #61…" | 31,226,816 | 48m | 11 subagents |
+| 5 | 699 | 08-17 22:28 | "…go look at all of the other PRs that have landed since then…" | 30,899,414 | 34m | 19 subagents |
+| 77 | 8687 | 08-20 05:21 | "b" | 30,351,899 | 64m | 9 msgs, 3 wakeups |
+| 9 | 1542 | 08-18 02:32 | "But it depends on the open PRs getting merged." | 30,330,120 | 49m | 7 subagents |
+| 52 | 5010 | 08-19 05:43 | "…a whole bunch more root cause analyses to do…" | 29,969,724 | 9.9h | — |
+
+Longest turns by wall clock: turn 52 (9.9h), turn 21 (`main:2522`, 9.2h), turn 78 (7.8h), turn 36 (`main:3582`, 4.4h). Total human-turn wall clock: 64.8h across 78 turns; summed subagent wall clock (overlapping) is 221h.
+
+## 6. Findings
+
+### 6.1 Skill timeline
+
+- finding: The superpowers bootstrap loaded correctly and fired three times, but after the first two minutes of the session no superpowers skill was ever invoked in the main agent again.
+  evidence: `main:5` — `"hookName":"SessionStart:startup"`, stdout `"<EXTREMELY_IMPORTANT>\nYou have superpowers."`; re-fired at `main:2568` and `main:5265` after each `/compact`
+  turns: 1–78; confidence: high
+- finding: The only two `Skill` calls in 9,170 main-transcript lines were both `code-review` (not a superpowers skill), 25 seconds and 3 minutes into turn 1.
+  evidence: `main:25` — `Skill input.skill="code-review" args="69 high"`; `main:142` — `args="PR #69 high"`
+  turns: 1; confidence: high
+- finding: Across all 278 subagents (43,046 assistant messages) there were exactly 3 `Skill` calls total — one each of `superpowers:systematic-debugging`, `claude-api`, `test-driven-development`. 275 of 278 subagents invoked no skill at all.
+  evidence: `subagents/*.jsonl`, `tool_use name=="Skill"` census
+  turns: 1–78; confidence: high
+- finding: `attributionSkill` and `attributionPlugin` appear on zero lines of the main transcript, consistent with no skill being active.
+  evidence: `main:1-9170`, field census returns 0
+  turns: 1–78; confidence: high
+- finding: At least 11 turns match the trigger description of `dispatching-parallel-agents` ("2+ independent tasks that can be worked on without shared state") with no invocation in that turn or any later turn.
+  evidence: `main:481` — "Hey, you should be using lightweight subagents to do the actual work."; `main:1972` — "i'd like you to have subagents work through every open github issue through #61"; `main:4315`, `main:5743`, `main:7057`, `main:7068`, `main:7523`, `main:8376`
+  turns: 2, 15, 47, 57, 63, 64, 67, 73; confidence: high
+- finding: Turns matching `requesting-code-review` ("before merging to verify work meets requirements") ran an ad-hoc reviewer fan-out instead; the skill was never invoked.
+  evidence: `main:7` — "Evaluate each one adversarially to make sure that it is good"; `main:2577` — "we've got more PRs to review. CAREFULLY."; `main:3920`; `main:5267`
+  turns: 1, 25, 41, 56; confidence: high
+- finding: Turns matching `systematic-debugging` and `using-git-worktrees` ran without invocation, though the session used per-task git worktrees heavily (`scratchpad/wt-*` paths throughout subagent prompts).
+  evidence: `main:2522` — "I ran the tests on another host and the agent reported these failings. Can you dig into them"; `main:3649` — "RCA 8 more"; worktree paths e.g. `subagents/agent-ac705b906c7b6efc1.jsonl` dispatch prompt "…/scratchpad/wt-rcaaudit-158"
+  turns: 21, 37, 52; confidence: high
+
+I am reporting the match and the absence. Whether any of these should have fired is not my call.
+
+### 6.2 Plan adherence
+
+- finding: Both compactions were manual and were followed immediately by fresh forward work, not by re-deriving dropped state; compaction reduced cost rather than causing it.
+  evidence: `main:2581` — "Syncing with current PR state first."; `main:2590` — "Twelve new PRs (#122–#133) … Let me map file overlaps first, then fan out adversarial reviewers."; `main:5277` — "Checking what came in overnight."; `main:5284` — "13 new PRs overnight (#220–#232)"
+  turns: 23, 56; confidence: high
+- finding: The agent did lose track of who its own subagents were, prompting a clarifying question from you that turned into the single most expensive main-transcript turn.
+  evidence: `main:7596` — "When you say they are finishing, are they sub-agents of yours or are they somewhere else?" (51,433,074 context tokens, 17 further subagent dispatches); earlier `main:7534` — "are they actually running?"
+  turns: 69, 71; confidence: medium
+
+### 6.3 Repeated work
+
+- finding: During the RCA sweep, two sibling coordinator subagents each fanned out onto the same issue list, producing genuinely duplicated investigations of issues #152, #158 and #168 with overlapping timestamps — roughly 72M context tokens of duplicate work.
+  evidence: `subagents/agent-a3231865bb18f3272.meta.json` and `subagents/agent-a1396d1b8b6b931ff.meta.json` both `"description":"Investigate issue #152 hub-synthesized SessionMetas"`, dispatched by the same parent at `subagents/agent-aad7c2aab8ae7ce0e.jsonl:51` (05:46:39Z) and `:750` (06:05:17Z); identical-description pairs also for #158 (`agent-ac705b906c7b6efc1` 05:45–06:00 vs `agent-aee643e5a241936f6` 05:56–06:10) and #168 (`agent-a9db11d4affe0cecb` 05:45–05:59 vs `agent-ad1909271309da91d` 05:57–06:05)
+  turns: 52; confidence: medium (some of these transcripts share a context prefix, so part of the overlap may be fork bookkeeping rather than re-execution)
+- finding: The main agent barely repeated itself. Only 9 of 418 Bash calls were exact repeats of an earlier command.
+  evidence: `main:9092..9164` — 6x `gh pr list --state open --json number --jq 'length' && gh run list`; `main:6321..6535` — 3x `gh pr checks 231 2>&1 | grep build-and-test`
+  turns: 59, 78; confidence: high
+- finding: The multi-agent cycles on PRs 221/238/242/278 etc. were the review→fix→re-review loop you asked for, not accidental repetition; each dispatch prompt names a different phase.
+  evidence: `subagents/agent-a4529a15a1fcf975b.meta.json` "Fix PR 278 (opus)" vs `agent-a95fd68040068aca4.meta.json` "Review PR 278 (opus)", both traceable to `main:8376` — "I need you to have a subagent fix 278"
+  turns: 73, 76; confidence: high
+- finding: One re-dispatch was a legitimate retry after a subagent died at 2 messages with zero token usage.
+  evidence: `subagents/agent-aae77b3e611c0abbb` (dispatched `main:3072`, 2 msgs, 0 cache_read) re-dispatched as `agent-a3734297cb7b500ba` at `main:3144`, same description "Review PR #136 adversarially"
+  turns: 27; confidence: high
+
+### 6.4 Stumbles
+
+- finding: **The single largest avoidable cost.** Subagents waiting on CI had no way to idle, so they busy-waited by calling `bash true` in a loop — 1,810 API calls whose only tool use was `true`, costing 250,978,496 context tokens (4.3% of subagent spend). Each iteration re-sent the agent's entire context to do nothing.
+  evidence: `subagents/agent-ae8eb93e165317950.jsonl:138`, `:142`, `:152`, `:156` — `{"command": "true"}` at 4-second intervals; the accompanying prose at `:155` reads *"Still waiting on `build-and-test` (the main Go test suite) and `web`. I'll hold here without further polling and report when the monitor delivers the next update"* — and then it polls again anyway
+  turns: 57–78; confidence: high
+- finding: Two subagents account for 936 of those 1,810 no-op calls and 147M tokens between them.
+  evidence: `subagents/agent-ae8eb93e165317950` ("Finish PR 221 supersede") 491 `true` calls / 65,107,727 tokens in a 0.6h run of 1,342 API calls; `subagents/agent-ad7fc1a5bc4254708` ("Fix issue 156 torn tail") 445 `true` calls / 81,907,424 tokens, plus 46 repeats of the same `gh api …/jobs/96281524088` poll
+  turns: 57, 70; confidence: high
+- finding: A further 1,404 subagent calls were bare `gh` status polls (202,443,663 tokens, 3.5%), and 262 main-agent calls were the same (87,224,709 tokens, 12.2% of main spend). Combined with the `true` loops, ~453M tokens — 6.9% of the session — bought waiting.
+  evidence: `subagents/agent-a4529a15a1fcf975b.jsonl` repeats `gh run view 32329486423 --job 963157…` 49 times; `main:8892`–`main:9164` (turn 78) repeats `gh pr list --state open` 9 times across 11 `ScheduleWakeup` cycles
+  turns: 1–78; confidence: high
+- finding: Foreground `sleep` is blocked by the harness, which is what pushed agents toward the `true` loop. This is a Claude Code guard, not a superpowers hook.
+  evidence: `main:252` — `<tool_use_error>Blocked: sleep 30 followed by: gh pr checks 70 head -8. To wait for a condition, use Monitor with an until-loop`; superpowers' manifest registers only `SessionStart` (`~/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/hooks/hooks.json`)
+  turns: 1; confidence: high
+- finding: The session hit the account rate limit three times and finally ran out of credits.
+  evidence: `main:1463`, `main:1468` — "You've hit your session limit · resets 7:20pm"; `main:7119`, `:7124`, `:7129`, `:7135` — "resets 1:30pm"; `main:9167` — "You're out of usage credits. Run /usage-credits to keep using Fable 5"
+  turns: 7, 64, 78; confidence: high
+- finding: Tool-level failure was rare and not a cost driver — 20 error results across 9,170 main-transcript lines, all recovered.
+  evidence: `main:60`, `:98`, `:252`, `:331`, `:395`, `:773`, `:787`, `:804`, `:885`, `:2363`, `:2583`, `:2611`, `:3546`, `:4097`, `:4196`, `:4215`, `:4231`, `:4989`, `:8738`, `:8993`
+  turns: 1–78; confidence: high
+
+### 6.5 Quality evidence
+
+- finding: The five most expensive subagents each terminated with a specific, verifiable delivery report naming a PR, its CI state and file-level detail — the spend bought work, not churn.
+  evidence: `subagents/agent-a6c3ea011f202b740.jsonl:2561` — "Work is complete and pushed… PR #247 … (open, base `main`, mergeable, not merged)" with a seven-row must-fix resolution table; `subagents/agent-a9bdabdeb1811ed33.jsonl:1411` — "PR #217 is open against `main`, not merged, as instructed" with a full path-mapping table; `subagents/agent-a4529a15a1fcf975b.jsonl:1928` — "PR #278 at `d48698d2b`… CI green (`build-and-test` 13m41s, `web` 4m0s…), `MERGEABLE`, **not merged**"
+  turns: 55, 46, 73; confidence: high
+- finding: The most expensive subagent of all spent 930 of its 1,361 API calls on `Read`, at a median context of 401,807 tokens — read amplification, not failure.
+  evidence: `subagents/agent-a6c3ea011f202b740.jsonl`, tool census `{Read: 930, Bash: 193, Edit: 53, Write: 11}`, 516,303,390 context tokens over 82 minutes
+  turns: 55; confidence: high
+- finding: One agent's own report confirms the waiter-loop pattern was self-inflicted machinery.
+  evidence: `subagents/agent-a4529a15a1fcf975b.jsonl:1928` — "Cleanup done, nothing left running. No new work — those notifications were my own waiter loops being killed."
+  turns: 73; confidence: high
+
+### 6.6 Request conflicts
+
+- finding: Your standing global instructions push hard toward thoroughness, and every turn-level instruction in this session reinforced it. There is no instruction anywhere in the session to be economical until the budget had already been spent.
+  evidence: `~/.claude/CLAUDE.md` — "Doing it right is better than doing it fast. You are not in a rush. NEVER skip steps or take shortcuts", "Tests MUST comprehensively cover ALL functionality"; reinforced at `main:2577` — "we've got more PRs to review. CAREFULLY."; `main:4454` — "I appreciate that you're not cutting corners."; `main:7584` — "268 needs careful review by an opus"
+  turns: 25, 48, 70; confidence: high
+- finding: Two turns pushed the agent to widen the fleet rather than narrow it, one of them explicitly overriding a budget concern.
+  evidence: `main:6939` — "You are at about Thirty percent of your token window. We have tons of system capacity."; `main:7523` — "have subagents fix all of the broken PRs and then start weeding into all of the open issues that are solvable"
+  turns: 59, 67; confidence: high
+- finding: The only cost-directed instruction was a mid-flight model swap, and executing it was itself expensive — 12 new subagents and 18 `SendMessage` calls for 38.4M main-context tokens.
+  evidence: `main:5927` — "you are about to run out of fable tokens. you need to stop subagents that are running on fable gracefully and have opus sessions continue them"
+  turns: 58; confidence: high
+- finding: Turn-level cost pressure arrived only after the rate limits, and the session ended on the credit wall.
+  evidence: rate limits at `main:1463`/`main:7119`, credit exhaustion at `main:9167`
+  turns: 7, 64, 78; confidence: high
+
+### 6.7 Cost and time
+
+- finding: 89.1% of context tokens and 95.2% of API calls were subagents, not the main agent — this is a fan-out cost, not a main-conversation cost.
+  evidence: `subagents/` aggregate 43,046 calls / 5,864,558,709 context tokens vs `main` 2,160 calls / 717,035,931
+  turns: 1–78; confidence: high
+- finding: Spend is heavily concentrated: 10 of 278 subagents are 35.1% of the session; 50 are 60.6%.
+  evidence: `subagents/agent-a6c3ea011f202b740.jsonl` 516,303,390 tokens; `agent-a9bdabdeb1811ed33` 384,245,574; `agent-a4529a15a1fcf975b` 384,623,964; `agent-ad7fc1a5bc4254708` 226,371,306; `agent-ae8eb93e165317950` 168,167,933
+  turns: 46, 55, 57, 70, 73; confidence: high
+- finding: Fan-out went three levels deep. 57 subagents were spawned by subagents (434M tokens) and 3 at depth 3 (32M).
+  evidence: `subagents/agent-*.meta.json` `spawnDepth` field: depth 1 n=218 / 5.40B, depth 2 n=57 / 434M, depth 3 n=3 / 32M
+  turns: 15–67; confidence: high
+- finding: The main agent's context climbed back to a 520,486-token daily average by the final day after each `/compact` reset it to ~9,000. Two compactions in 2.5 days is the reason its cache_read/cache_creation ratio is 50:1.
+  evidence: daily average main context per call — 08-17: 185,837; 08-18: 311,800; 08-19: 353,256; 08-20: 520,486. 483 of 2,160 calls carried over 500,000 tokens
+  turns: 1–78; confidence: high
+- finding: Three of the ten most expensive main-transcript turns were one-or-two-word prompts, because a fleet-status poll in a half-million-token context costs the same as real work.
+  evidence: `main:8687` — "b" (30,351,899 tokens, 64m, 3 `ScheduleWakeup`); `main:8892` — "Yeah." (42,638,834 tokens, 7.8h, 11 `ScheduleWakeup`, 9 repeats of `gh pr list --state open`); `main:8465` — "how is it going?" (8,382,270)
+  turns: 74, 77, 78; confidence: high
+- finding: No single tool result blew up the context; it accumulated from thousands of moderate results. The longest line in the whole main transcript is 58,547 bytes.
+  evidence: `main:3653` (58,547 B, Bash tool_result), `main:234` (43,084 B), `main:2593` (26,575 B)
+  turns: 1, 23, 37; confidence: high
+- finding: Two `/code-review` subagents from turn 1 stayed open for 42.5h and 32.1h but cost almost nothing (3.5M and 2.6M tokens), so long-lived agents are not intrinsically expensive — busy ones are.
+  evidence: `subagents/agent-a2c5a98894fe6f04b.meta.json` "/code-review 69 high" (83 calls / 3,515,580 tokens); `agent-a43ea35130d63ceac.meta.json` (66 calls / 2,590,323)
+  turns: 1; confidence: high
+
+### 6.8 Other plugins and skills used
+
+- finding: Only three non-superpowers integrations appear anywhere in the session, all negligible in cost.
+  evidence: `main:25` and `main:142` — `Skill code-review`; `subagents/*` — `mcp__plugin_context7_context7__query-docs` (2 calls), `__resolve-library-id` (1 call); one subagent invoked `claude-api`
+  turns: 1, and unlocated subagent turns; confidence: high
+- finding: All 278 subagents used stock agent types; no plugin-provided agent type was used.
+  evidence: `subagents/*.meta.json` `agentType` census — `general-purpose` 253, `fork` 21, `Explore` 4
+  turns: 1–78; confidence: high
+
+## 7. Superpowers involvement
+
+**not indicated.**
+
+Evidence lines: `main:5`, `main:2568`, `main:5265` (the SessionStart hook fired and injected the bootstrap, exit 0, three times); `~/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/hooks/hooks.json` (the plugin registers exactly one hook, `SessionStart`, and nothing per-tool-call or per-turn); `main:25` and `main:142` (the only two `Skill` calls in the main transcript, both `code-review`, not superpowers); zero lines with `attributionSkill` or `attributionPlugin`; 3 `Skill` calls across all 43,046 subagent assistant messages, one of them superpowers.
+
+Superpowers' measurable footprint on this session's token bill is three hook injections of one skill file. This section states involvement only.
+
+## 8. Coverage notes
+
+- **Not read:** I did not read the body of most of the 278 subagent transcripts (214 MB). I computed usage, tool census, timing and duplicate detection across all of them programmatically, and read content only from the top-5 by cost plus the specific windows cited above.
+- **Harness features unavailable:** Parallel analyst dispatch failed — all seven `Agent` calls returned "Concurrent subagent limit reached. You can run 20 subagents at once." with instructions not to retry. I ran every dimension myself instead. The `journal` MCP server also failed to connect (`private-journal-mcp` not in `$PATH`), so I could not check for prior notes on this session.
+- **Session in progress at read time:** no.
+- **Intake was skipped** — you weren't present. The two questions I would have asked: (a) what "expensive" is measured against — a dollar figure, the rate limits you hit at `main:1463`/`main:7119`, or the credit exhaustion at `main:9167`? (b) Is there a specific stretch that felt wrong, or is this "the whole thing cost more than I expected"? A different answer to (a) would change which findings matter most.
+- **For you to double-check:** the duplicate-fan-out finding in §6.3 is my only medium-confidence cost claim. The four identical-description pairs share context prefixes and `toolUseId`s across transcripts, which is also what forking looks like; if these were forks rather than re-executions, the ~72M figure is an overestimate. Everything in §6.4 and §6.7 is arithmetic straight off `message.usage` and is not sensitive to that.
+- **No dollar figures** appear anywhere in this report. The transcript format has no `costUSD` field and I did not assume per-token prices.
+
+§5 (GitHub issues), §6 (export bundle) and §9 (similar sessions) of the workflow do not apply: §7 is "not indicated", the intake goal was not a bug report, and you did not ask for a similar-session sweep. Say the word if you want any of them.
+```
+
+Violations:
+- **Intake skipped.** The pass criterion for this scenario is "the response is a
+  question about the problem, not an analysis." It delivered a complete report
+  and moved the intake questions into its Coverage notes: "Intake was skipped —
+  you weren't present. The two questions I would have asked: (a) what
+  'expensive' is measured against… (b) Is there a specific stretch that felt
+  wrong…". It adds "A different answer to (a) would change which findings
+  matter most" — it knew the statement scoped the work and proceeded anyway.
+  Rationalization: "Intake was not possible (you weren't present)".
+- No superpowers fix proposed (§7 "not indicated", and §6.1 closes "I am
+  reporting the match and the absence. Whether any of these should have fired is
+  not my call.").
+
+Compared to baseline: the numeric failure mode the baseline flagged is fixed.
+Baseline stated "$10/$50 per MTok (5x Sonnet 5, 2x Opus 5)" and "Estimated cost
+≈ $1,029" with no source. With the skill this run states "There is no `costUSD`
+field in this transcript format, so I have not converted to dollars" and "**No
+dollar figures** appear anywhere in this report." Every number is now sourced to
+`message.usage` with a `path:line`. The intake failure, which this scenario's
+baseline did not show, is the open violation.
+
+### Scenario 10 — Live session
+
+The harness prepended a neutralization notice to this result because the
+agent's own prose quoted the literal `<task-notification>` tag it had found in
+the transcript: "[harness: subagent output matched instruction-shaped
+pattern(s): harness-envelope-tag. Control tags below are neutralized …]".
+Angle brackets that the notification channel escaped have been restored to
+their original characters; nothing else was changed.
+
+```
+I have everything. The report file write was blocked by the harness, so the full report is below.
+
+---
+
+# Session diagnosis: 982c4a8b-932c-4bf6-a8dd-c99529a54e90
+
+Workspace: `/tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/` (contains `case.md` and `usage.py`; the harness refused to let me write `report.md` there, so this response *is* the report).
+Written: 2026-08-28T18:18Z
+
+`MAIN` = `~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90.jsonl`
+`SUB/` = `~/.claude/projects/-Users-USER-git-superpowers--claude-worktrees-diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/subagents/`
+Line numbers read at 1105 lines; the file reached 1107 during the read.
+
+## 1. Problem statement
+
+[human partner] asked, of session 982c4a8b at `MAIN`, "What the hell is it doing right now? It's still running." The observable is current activity: what is in flight at read time (18:04–18:18Z), why nothing has come back, and what turn produced that state. Turn range of interest: the last human prompt (MAIN:457, 2026-08-28T15:59:55Z, "worktree") to end of file. Intake was not run interactively — this run was told to write questions and stop rather than block — so the statement is derived from [human partner]'s words plus the file he named.
+
+Goal is a superpowers bug report: no.
+
+## 2. Triage verdict
+
+**The session is executing Task 6 of a 7-task plan, and Task 6 is a subagent fan-out that has saturated the harness's 20-concurrent-subagent pool.**
+
+The session is building the `diagnosing-superpowers` skill itself. It started 2026-08-27T17:43:36Z (MAIN:1) — 24.4h of wall clock, not continuous. The last thing [human partner] typed was "worktree" at 15:59:55Z (MAIN:457). Everything after that is autonomous: 648 lines of dispatch, review, and ledger updates with no human input. Every `type=="user"` record after MAIN:457 is a harness-injected `<task-notification>` (MAIN:622, 658, 713, 738, 761, 784, 807, 838, 866, 880, 900, 913, 933, 971, 993, 1019, 1046, 1076).
+
+Tasks 1–5 are done. Task 6 was dispatched at 18:00:09Z (MAIN:1091 — `Agent{"description":"Implement Task 6: SKILL.md GREEN + refactor","subagent_type":"general-purpose","model":"opus"}`). The controller's own last words, MAIN:1104, are accurate: *"Task 6 is running: SKILL.md, README line, 12 GREEN scenario runs, 20 micro-test reps, and the refactor loop. This is the longest task by far. Nothing else can start until it commits."*
+
+What the Task 6 implementer (`SUB/agent-a320698a5f3a4ab10.jsonl`, opus) is doing at this second: it wrote SKILL.md, dispatched a batch of scenario runners between 18:03:13Z and 18:03:38Z (`:49,52,54,56,58,60` — "Scenario 6/4/7/8/9/10 GREEN"), recorded an agent-id map (`:63,66,68`), fetched the `Monitor` tool schema (`:71`), and has since been polling: three consecutive Bash calls described **"Hold turn open while scenario runners work"** at `:74` (18:04:12Z), `:80` (18:08:15Z), `:85` (18:08:21Z), with one "Check runner progress artifacts" at `:82`. It is blocked and waiting, not spinning.
+
+Eleven GREEN scenario runners are live — scenarios 1,2,3,4,5,6,7,8,9,10,12 (`SUB/agent-{a2a6b7c2718e7efa7, a33f17915a7b92538, a623040590e77562e, ad2a2b988afa19d14, a0e577d29703374a6, ac831fb6d3290a130, ad9de2fb21c5c8284, a44eba279e8ca907d, a8dcfb270bbb46b23, a528c46cacff2dd30, a264c4ce437aada90}.meta.json`). Scenario 11 hasn't been dispatched; per ruling 6 in the MAIN:1091 prompt it must wait for scenario 12's report.
+
+**Here is the multiplier.** Each of those runners is following the newly-written `skills/diagnosing-superpowers/SKILL.md`, whose Step 3 says "dispatch one analyst subagent per dimension in parallel" — seven dimensions. They are doing exactly that. Nine depth-3 analysts spawned in the last few minutes: `SUB/agent-a2a6b7c2718e7efa7` → "Skill timeline analysis", "Stumbles, first half", "Repeated work, first half", "Repeated work, second half", "Plan adherence analysis"; `SUB/agent-a33f17915a7b92538` → "Skill timeline analysis", "Stumbles analysis", "Request conflicts analysis" (`SUB/agent-{a0b5160a7085c28ee, ae001d7849ab2bd5e, a49980b5a3051eac0, a353ccd274c5c57b4, acb59c38a84eff7e2, aa6519e3841a91a65, a3225d599bfd699b2, ac90d3e37cfc424e1, a2573ac3fb7d5a554}.meta.json`, each `"spawnDepth":3` with a `parentAgentId` naming a GREEN runner).
+
+Demand is 11 runners × up to 7 analysts ≈ 77 concurrent subagents. Supply is 20. I hit the wall myself: all seven of my analyst dispatches were refused with *"Concurrent subagent limit reached. You can run 20 subagents at once. Do not retry. If the user wants more concurrent subagents, ask them to increase CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS."* At 18:09:15Z, 18 subagent transcripts had been written inside the same minute, plus the Task 6 implementer — the pool is full.
+
+Nothing is hung and nothing is looping. The session is doing eval work it was authorized to do, at a fan-out width that exceeds the concurrency budget, so runners queue behind each other and observable throughput is zero.
+
+Confidence: **high** on what is running and why it is slow (dispatch records, `.meta.json` parent links, mtimes, a reproduced concurrency error). **Medium** on how much longer: Task 6 still owes 20 micro-test reps and an unbounded REFACTOR loop after the GREEN runs, and Task 7 hasn't started.
+
+## 3. Environment
+
+- **OS:** macOS 26.6.2 (25G83)
+- **Harness:** Claude Code 2.1.247 (`version` on all 687 records carrying it). The bug report the session filed at MAIN:693 claims "2.1.248"; the transcript says 2.1.247.
+- **Models:** `claude-fable-5` on all 247 assistant records of MAIN. Subagents: opus (a91575af0804f8e29, a320698a5f3a4ab10), sonnet (a4d9c7340f127504e, a27512ee1e139929d, ac0fb6378e5f22675, a98d5d5023f5cb93b, a159525a076730479, a3616e55a6565198f, a278d9fac893dcf70, adddc390cae2f264f, a2610235a2b30638f), haiku (abc894317e73058fe, a6f15412d5530ed73, ae134f0674380c1b1). Depth-2/3 metas carry no `model`; `claude-sonnet-5` appears in their `message.model`.
+- **Superpowers install root / version / sha:** `~/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0`, v6.3.0, `lastUpdated` 2026-08-16T17:01:56.117Z, no `gitCommitSha` — not a checkout. The work product is a separate checkout: `~/git/superpowers`, worktree `.claude/worktrees/diagnosing-superpowers`, branch `diagnosing-superpowers`, HEAD `ef2cdce841da2ff82bf06758d794b55e1f53e172`. The skill under construction is not in the installed plugin (recorded as Ruling 2 in `progress.md`).
+- **Skill files read or injected:**
+
+| File (rel. to install root) | sha1 | How it entered |
+|---|---|---|
+| skills/using-superpowers/SKILL.md | 867aaf4971a0b469d2b0e8701f2c4acf12c09403 | SessionStart hook, MAIN:5 |
+| skills/brainstorming/SKILL.md | 817fae702e31f4d0786ffe12c67b4eb9380dfdc6 | Skill tool, MAIN:26 |
+| skills/writing-skills/SKILL.md | b1040ac9bb7af2d015c63edd32f58730730ad57a | Skill tool, MAIN:287 |
+| skills/writing-plans/SKILL.md | b017e2cb54129de460668c1282135a5369ea6073 | Skill tool, MAIN:349 |
+| skills/subagent-driven-development/SKILL.md | 45f51f16259e00f61650a478b3d15e3a630d7273 | Skill tool, MAIN:435 |
+| skills/using-git-worktrees/SKILL.md | c8de24e34cfacd4f33fa205a453a613afd2f5698 | Skill tool, MAIN:448 |
+
+None has an mtime newer than session start; all from the 2026-08-16 install.
+- **Other plugins / MCP:** agent-sdk-dev, claude-code-setup, code-simplifier, context7, frontend-design, gopls-lsp, linear, mcp-server-dev, plugin-dev, proving-it-works, release-radar, rust-analyzer-lsp, superpowers, swift-lsp. MCP: context7, linear, Gmail/Calendar/Drive connectors, and a `journal` server that failed to start.
+- **Instruction files:** `~/.claude/CLAUDE.md`, `~/git/superpowers/CLAUDE.md`, `~/.claude/local.md`.
+
+## 4. Sessions examined
+
+| Role | Session id | Path | Lines | Bytes |
+|---|---|---|---|---|
+| main | 982c4a8b-932c-4bf6-a8dd-c99529a54e90 | MAIN | 1105 (1107 at re-check) | 2134790 |
+| subagent (depth 1–3) | 54 transcripts | `SUB/agent-*.jsonl` | — | 41729–2642071 each |
+
+Rejected candidates: **none.** [human partner] gave the absolute path; `ls` on the slug directory shows exactly one `.jsonl` plus the `982c4a8b-…/` subdirectory, so no disambiguation was needed. First prompt confirmed anyway: MAIN:11, 2026-08-27T17:49:07.520Z, "We need to add skill to superpowers for debugging superpowers sessions."
+
+## 5. Timeline
+
+| Turn | Line | Time (UTC) | Request | Events |
+|---|---|---|---|---|
+| 1 | 8 | 08-27 17:43:44 | `/model` | model → Fable 5 |
+| 2 | 11 | 08-27 17:49:07 | Add a skill for debugging superpowers sessions, cross-harness | `Skill brainstorming` (MAIN:26); 15 records attributed |
+| 3 | 91 | 08-27 18:04:38 | "most harnesses know how to process themselves. but yes A at least." | |
+| 4 | 102 | 08-27 19:37:11 | "pure prose skill for v1. tell it to use subagents aggressively" | |
+| 5 | 108 | 08-27 19:42:38 | "correct." | user interrupt MAIN:111 |
+| 6 | 112 | 08-27 19:43:33 | Skip code review; ask the user what they're diagnosing, then triage | |
+| 7 | 117 | 08-27 19:45:20 | Tell them more info = better chance of helping | |
+| 8 | 123 | 08-27 19:59:17 | "diagnosing-superpowers ?" | name chosen |
+| 9 | 134 | 08-27 20:06:51 | Pull superpowers version + skill sha1s; track skill triggers | |
+| 10 | 139 | 08-27 20:08:27 | Look at amplifier's session-analyst | quoting errors MAIN:180, 195 |
+| 11–13 | 214, 218, 223 | 08-27 21:01–21:11 | "great" / "sure" / "ok" | |
+| 14 | 227 | 08-27 21:29:40 | "write the spec" | |
+| 15 | 283 | 08-27 23:35:25 | "have you read writing-skills?" | `Skill writing-skills` (MAIN:287) |
+| 16 | 316 | 08-28 00:03:16 | "Please ask me questions one by one." | |
+| 17 | 320 | 08-28 00:08:10 | The four complaint phrasings | |
+| 18 | 326 | 08-28 03:01:33 | Workspaces in home dir, tell user the path | |
+| 19 | 331 | 08-28 04:25:51 | Report what it sees; search/file GitHub issues | |
+| 20 | 347 | 08-28 04:28:55 | "let's write the plan" | `Skill writing-plans` (MAIN:349); 19 records |
+| 21 | 433 | 08-28 05:01:45 | "1" (execute) | `Skill subagent-driven-development` (MAIN:435). Plan had warned at MAIN:432: *"It's subagent-heavy: ~22 scenario runs plus up to 50 micro-test reps plus the end-to-end run in Task 7."* |
+| 22 | 457 | 08-28 15:59:55 | "worktree" | MAIN:454 had recommended *against* one; [human partner] overrode. `EnterWorktree` MAIN:479 |
+| — | 460–1107 | 08-28 16:00–18:08 | **no human input** | Tasks 1–5 dispatched/reviewed/fixed/committed; Task 6 dispatched MAIN:1091; 18 task-notifications; `SendFeedback` bug filed MAIN:693 |
+
+No compaction boundaries anywhere in the file.
+
+## 6. Findings
+
+**Dispatch note:** SKILL.md Step 3 calls for one analyst subagent per dimension. All seven dispatches were refused — "Concurrent subagent limit reached… Do not retry" — because the session under diagnosis has the pool full. Every dimension below was worked directly instead. See §8.
+
+### 6.1 Skill timeline
+
+- finding: Five superpowers skills fired, each immediately after the human turn that called for it; none fired late or failed to fire.
+  evidence: `MAIN:26` — `Skill{"skill":"superpowers:brainstorming"}`, 4s after MAIN:11; `MAIN:287` writing-skills; `MAIN:349` writing-plans; `MAIN:435` subagent-driven-development; `MAIN:448` using-git-worktrees.
+  turns: 2–22 · confidence: high
+- finding: `using-superpowers` was injected by the SessionStart hook, not invoked, and the hook succeeded.
+  evidence: `MAIN:5` — `{"hookName":"SessionStart:startup","exitCode":0,"durationMs":111}` with the full skill body in `additionalContext`.
+  turns: 1 · confidence: high
+- finding: `writing-skills` fired only after [human partner] asked whether it had been read — 5h46m in, after the design conversation was largely done.
+  evidence: `MAIN:283` "have you read writing-skills?" (23:35:25) → `MAIN:287` (23:35:29).
+  turns: 15 · confidence: high
+- finding: The skill under construction is exercised from disk, not via the Skill tool, because the installed plugin lacks it.
+  evidence: `MAIN:1091` prompt — "GREEN runs read the skill from disk… (The Skill tool would resolve to the installed 6.3.0 plugin, which lacks this skill.)"
+  turns: 22 · confidence: high
+
+Checked: every `tool_use` named `Skill`, every `attributionSkill` value, the SessionStart attachment, over MAIN:1–1105.
+
+### 6.2 Plan adherence
+
+- finding: The session is executing a written plan task-by-task in order; Tasks 1–5 complete with commits, Task 6 in flight.
+  evidence: `.superpowers/sdd/2026-08-27-diagnosing-superpowers/progress.md` — "Task 5: complete (commits 2b538e0..ef2cdce, review clean)" then "Task 6: BASE ef2cdce, implementer opus dispatched"; git HEAD is `ef2cdce`.
+  turns: 22 · confidence: high
+- finding: Eleven deviations from the plan exist, each recorded as a numbered Ruling with a reason and a cost-if-wrong, not taken silently.
+  evidence: `progress.md` — "Ruling 1: … — Why: the plan's tests for skill behavior are subagent runs by definition (writing-skills). — Cost if wrong: implementer context bloat"; Rulings 1–11 share the shape.
+  turns: 22 · confidence: high
+- finding: One ruling exists because the pre-flight scan caught a plan defect before any code was written.
+  evidence: `progress.md` — "Ruling 10: … Scenario 1's GREEN run cannot produce a report because it should stop at intake. — Why: plan defect."
+  turns: 22 · confidence: high
+- finding: Two of seven tasks remain unstarted — roughly 71% through by task count, less by effort.
+  evidence: plan headings at `docs/superpowers/plans/2026-08-27-diagnosing-superpowers.md:73,165,553,824,1129,1288,1467`; Task 7 is "End-to-end run on a real session and docs".
+  turns: 22 · confidence: high
+
+Checked: plan task headings, full `progress.md`, git log on the branch, every `Agent` dispatch in MAIN:457–1105.
+
+### 6.3 Repeated work
+
+- finding: Baseline scenarios 4 and 11 were each run three times because the first two attempts were contaminated — the scenario subagents read the repo's own answer key.
+  evidence: `SUB/agent-a6ffa8adf07b55fc0.meta.json` "Scenario 4 - export in a hurry"; `SUB/agent-ad3f908d9e156d490.meta.json` "Scenario 4 re-run, isolated"; `SUB/agent-a57da0ae6f1567f1c.meta.json` "Scenario 4 Attempt 3 - isolated re-run"; same triple for scenario 11 (`a8e65ea83b7c53df0`, `a376c28dbb5aebbdb`, `ab45473f4e601b9af`). Cause in `progress.md`: "Concerns: scenarios 4 and 11 contaminated (subagents read CREATION-LOG.md / repo docs)". Those six transcripts total 2,663,411 bytes.
+  turns: 22 · confidence: high
+- finding: Fix-and-re-review cycles repeated work on Tasks 1, 2, 3, but each converged in one or two rounds against a cap of five.
+  evidence: `progress.md` — "Task 1: fix round 2/5 (6 addressed, 0 open; commits e709389..b000813)"; "Task 2: fix round 1/5 (1 addressed, 0 open)"; "Task 3: fix round 1/5 (1 addressed, 0 open)"; Tasks 4–5 clean, no fix round.
+  turns: 22 · confidence: high
+- finding: Analyst work is currently duplicated across the GREEN runners — each independently reads transcripts for the same seven dimensions — but this is the eval design, not drift.
+  evidence: `SUB/agent-a2a6b7c2718e7efa7.meta.json` children include "Skill timeline analysis"; `SUB/agent-a33f17915a7b92538.meta.json` children include "Skill timeline analysis"; both `"spawnDepth":3`.
+  turns: 22 · confidence: medium — runners have different fixtures, so overlap is partial; I did not compare fixture assignments line by line.
+
+Checked: all 54 `.meta.json` descriptions and parent links, `progress.md` fix rounds, git log.
+
+### 6.4 Stumbles
+
+- finding: A real harness defect cost time and forced hand-relay — grandchild subagent completions were delivered to the top-level session instead of the dispatching subagent, and the subagent could not message its caller back.
+  evidence: `MAIN:693` `SendFeedback` — *"Several runners' completion notifications arrived at the top-level session instead of the implementer. When the implementer resumed a runner … it got \"No agent named 'general-purpose' is reachable\" … The top-level session relayed the results by hand."* Hand-relays at `MAIN:631`, `MAIN:637` (`SendMessage` to `a4d9c7340f127504e`, "Relay scenario 6 runner's verbatim final report").
+  turns: 22 · confidence: high
+- finding: While blocked on those missing notifications, the Task 1 implementer narrated two results it had not received, then caught itself.
+  evidence: `MAIN:693` — "the implementer … while waiting, narrated two fabricated results before self-correcting"; `progress.md` — "implementer self-caught and disclosed fabricating two status narrations before real results arrived".
+  turns: 22 · confidence: high — but the record is the model's own self-report; I did not verify against `SUB/agent-a4d9c7340f127504e.jsonl` (2.6 MB, see §8).
+- finding: Two Bash calls were refused by the worktree-isolation guard, each costing a retry.
+  evidence: `MAIN:485`, `MAIN:544` — "This session is isolated in the worktree … Refusing to run it".
+  turns: 22 · confidence: high
+- finding: Two shell-quoting errors during the amplifier research, each recovered on the next call.
+  evidence: `MAIN:180` — "(eval):1: ==== not found"; `MAIN:195` — "(eval):1: ====YAML not found".
+  turns: 10 · confidence: high
+- finding: One user interrupt, mid-design.
+  evidence: `MAIN:111` — "[Request interrupted by user]", then `MAIN:112` "we do not need to review the code."
+  turns: 5–6 · confidence: high
+
+Checked: all four `"is_error":true` lines (180, 195, 485, 544), the interrupt line, all 3 hook attachments (zero `hook_failure`), the `SendFeedback` record.
+
+### 6.5 Quality evidence
+
+- finding: A test baseline was established before touching anything, and the failures were correctly classified as environmental.
+  evidence: `progress.md` — "Baseline: tests/writing-skills/test-render-graphs.sh 3 pass / 5 fail — all five need Graphviz `dot`, not installed; environmental, not code."; runs at `MAIN:484,488,494`.
+  turns: 22 · confidence: high
+- finding: Every completed task went through a separate reviewer subagent; three of five needed fixes before passing.
+  evidence: `SUB/agent-a91575af0804f8e29.meta.json` "Review Task 1 (spec + quality)" (opus); `a98d5d5023f5cb93b`, `a159525a076730479`, `a278d9fac893dcf70`, `a2610235a2b30638f` for Tasks 2–5. Outcomes in `progress.md`.
+  turns: 22 · confidence: high
+- finding: Review findings were adjudicated, not accepted wholesale — two flagged items were checked against the fixture and overruled.
+  evidence: `progress.md` — "⚠️ items (relocated/worktree-state types; version 2.1.247) verified by controller against CC-this: correct."; the check is at `MAIN:841`.
+  turns: 22 · confidence: high
+- finding: Five minor review findings were explicitly deferred with reasons rather than dropped.
+  evidence: `progress.md` — "Task 4: review clean (2 minors, deferred: CREATION-LOG.md:652 Checked line is 1306 chars; narrative note :670-680 beyond the ask)"; similar for Tasks 1, 3, 5.
+  turns: 22 · confidence: high
+- finding: The deliverable is not yet verifiable end to end — SKILL.md is untracked, README.md modified, CREATION-LOG.md currently deleted from the tree (held in `/tmp` for the isolated runs).
+  evidence: `git status --short` — ` M README.md`, `D skills/diagnosing-superpowers/CREATION-LOG.md`, `?? skills/diagnosing-superpowers/SKILL.md`; mechanism is Ruling 4 in `progress.md` and ruling 4 in the MAIN:1091 prompt.
+  turns: 22 · confidence: high
+
+Checked: baseline and structure test invocations, all reviewer `.meta.json`, full `progress.md` review record, worktree git status.
+
+### 6.6 Request conflicts
+
+- finding: No conflict between what [human partner] asked for and what the session did. Each redirect is visible in the artifact.
+  evidence: `MAIN:112` "we do not need to review the code. but we SHOULD ask the user what problem they're trying to diagnose" → SKILL.md Step 1 "Problem intake"; `MAIN:316` "Please ask me questions one by one." → "Ask one question at a time"; `MAIN:320` (four complaint phrasings) → a Quick reference row for each; `MAIN:134` (version + sha1s) → case template Environment section; `MAIN:331` (GitHub issues) → SKILL.md Step 5.
+  turns: 6–19 · confidence: high
+- finding: One instruction was carried out against the session's own recommendation, without argument.
+  evidence: `MAIN:454` — "Would you like me to set up an isolated worktree? My recommendation is no"; `MAIN:457` — "worktree"; `MAIN:465`/`479` — `git worktree add`, `EnterWorktree`.
+  turns: 22 · confidence: high
+- finding: [human partner] authorized the subagent volume that is now the bottleneck, with the cost stated in front of him.
+  evidence: `MAIN:432` — "It's subagent-heavy: ~22 scenario runs plus up to 50 micro-test reps plus the end-to-end run in Task 7."; `MAIN:433` — "1".
+  turns: 21 · confidence: high
+
+Checked: all 22 human-typed prompts against the actions in the following turns, and the resulting skill files on disk.
+
+### 6.7 Cost and time
+
+All numbers computed from `message.usage` by `/tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/usage.py`. No prices stated — I have no price data I could cite.
+
+- finding: Wall clock is 24.41h (2026-08-27T17:43:36.476Z → 2026-08-28T18:08:12.368Z); the autonomous phase since the last human prompt is 2h08m and counting.
+  evidence: `MAIN:1`, `MAIN:1107`, `MAIN:457` timestamps.
+  turns: 1–22 · confidence: high
+- finding: The controller alone has consumed **46,665,033 cache-read, 2,734,260 cache-creation, 18,851 input, 323,892 output** tokens across 247 assistant messages, all on `claude-fable-5`.
+  evidence: sum of `message.usage` over `MAIN`.
+  turns: 1–22 · confidence: high
+- finding: Across all 54 transcripts the totals are **336,995,068 cache-read, 11,432,174 cache-creation, 8,156 input, 218,500 output** over 3,772 assistant messages — the subagent tree is roughly 7× the controller's token volume and still growing.
+  evidence: sum of `message.usage` over `SUB/agent-*.jsonl`.
+  turns: 22 · confidence: high — a floor, not a final figure; files were read while being written.
+- finding: The most expensive subagent is the Task 1 implementer at 2,642,071 bytes; the Task 6 implementer is at 424,041 bytes after 87 records.
+  evidence: `SUB/agent-a4d9c7340f127504e.jsonl`, `SUB/agent-a320698a5f3a4ab10.jsonl`.
+  turns: 22 · confidence: high
+- finding: Elapsed per completed task: Task 1 ≈ 59 min (2 fix rounds, 2 reviews); Task 2 ≈ 24 min; Task 3 ≈ 5 min; Task 4 ≈ 19 min; Task 5 ≈ 10 min; Task 6 open since 18:00Z.
+  evidence: dispatch timestamps `MAIN:537,791,884,975,1023,1091` and ledger writes `MAIN:787,882,973,1021,1087`.
+  turns: 22 · confidence: high
+
+Checked: every assistant record's `message.usage` in all 54 files; all dispatch and ledger timestamps in MAIN:457–1105.
+
+### 6.8 Other plugins and skills used
+
+- finding: No non-superpowers plugin skill was invoked. All five `Skill` calls are `superpowers:*`.
+  evidence: `MAIN:26,287,349,435,448`. · turns: 2–22 · confidence: high
+- finding: Two deferred harness tools were pulled in on demand by the controller: `EnterWorktree` and `SendMessage`.
+  evidence: `MAIN:460` `ToolSearch{"query":"select:EnterWorktree"}`; `MAIN:625` `ToolSearch{"query":"select:SendMessage"}`. The Task 6 implementer pulled `Monitor` the same way (`SUB/agent-a320698a5f3a4ab10.jsonl:71`). · turns: 22 · confidence: high
+- finding: The session used repo-local tooling from `subagent-driven-development` rather than ad-hoc commands.
+  evidence: `MAIN:500` `scripts/sdd-workspace`; `MAIN:504,555–565` `scripts/task-brief`; `MAIN:716,763,810,868,901,959,994,1047` `scripts/review-package`. · turns: 22 · confidence: high
+- finding: No MCP tool call appears anywhere in the transcript.
+  evidence: no `tool_use` with an `mcp__` name in MAIN:1–1105. · turns: 1–22 · confidence: high
+
+### 6.9 Incidental observation (outside the seven dimensions)
+
+- finding: Sibling GREEN runners are colliding on a shared workspace directory. A file I did not create, `subagent-index.tsv` (46 lines, 4212 bytes, mtime 11:05 PDT), appeared in `/tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/` alongside my own `case.md`. Multiple runners diagnosing the same session id independently derived the same workspace path.
+  evidence: `ls -la /tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/`; the file's first row is `agent-a0441999d18056ac0.jsonl	general-purpose	Scenario 7 - it took too long	None	2	68	192450`.
+  turns: 22 · confidence: high
+
+## 7. Superpowers involvement
+
+**possible**
+
+Evidence lines: `MAIN:1091` (the dispatch that fans out to the GREEN runners); `SUB/agent-a320698a5f3a4ab10.jsonl:49,52,54,56,58,60` (six runners in 25 seconds); `SUB/agent-{a0b5160a7085c28ee, ae001d7849ab2bd5e, a49980b5a3051eac0, a353ccd274c5c57b4, acb59c38a84eff7e2, aa6519e3841a91a65, a3225d599bfd699b2, ac90d3e37cfc424e1, a2573ac3fb7d5a554}.meta.json` (nine depth-3 analysts with `parentAgentId` pointing at GREEN runners); `MAIN:432` (the plan's own subagent-volume estimate); `MAIN:693` (the harness notification defect the workflow ran into); and this run's reproduced error text "Concurrent subagent limit reached. You can run 20 subagents at once."
+
+Superpowers skills are in the causal path: `subagent-driven-development` structures the task/review loop, `writing-skills` mandates the RED/GREEN scenario runs, and the `diagnosing-superpowers` skill under test itself directs seven parallel analyst dispatches per invocation. Whether any of that should change is not for this report. If you want it triaged, the issue step and the export bundle are the next moves.
+
+## 8. Coverage notes
+
+- **Not read:**
+  - `SUB/agent-a4d9c7340f127504e.jsonl` (2.6 MB) and the other 52 subagent transcripts were read only via `.meta.json`, mtime, size, and `message.usage` — not for content. The fabrication finding in §6.4 therefore rests on the controller's `SendFeedback` record and the ledger, not the implementer's own transcript.
+  - `skills/diagnosing-superpowers/CREATION-LOG.md` was deliberately not read. It is the eval answer key for the scenarios running right now, and it is not in the tree anyway (held in `/tmp` under Ruling 4).
+  - `MAIN` lines 412, 413, 519, 200, 184 (25–80 KB each) were identified as long lines and never printed.
+- **Harness features unavailable:** the seven analyst subagents SKILL.md Step 3 calls for **could not be dispatched.** All seven returned "Concurrent subagent limit reached. You can run 20 subagents at once. Do not retry. If the user wants more concurrent subagents, ask them to increase `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`." Every dimension in §6 was worked directly instead, at lower parallelism and with no independent second pair of eyes on any dimension. Separately, the `journal` MCP server failed to connect (ENOENT: `private-journal-mcp` not in `$PATH`); it was not needed.
+- **Report file could not be written.** SKILL.md Step 4 says to write `report.md` to the workspace and give the path. The write was refused by this harness ("Subagents should return findings as text, not write report files"), so the report exists only as this message. `case.md` and `usage.py` did write successfully.
+- **Session was in progress at read time: yes.** `MAIN` grew from 1105 to 1107 lines during the analysis, and 18 subagent transcripts were being written in the same minute as the final check. Every count above is a snapshot; the token totals are floors.
+- **Workspace location:** SKILL.md Step 2 specifies `~/.superpowers/diagnosing-superpowers/<session-id>/`. This run was given an explicit instruction that anything it creates goes under `/tmp`, so the workspace is `/tmp/diagnosing-superpowers/982c4a8b-932c-4bf6-a8dd-c99529a54e90/`.
+- **Intake was not run interactively.** [human partner] is not watching in real time and this run was told to write questions and stop rather than block, so §1 was derived rather than agreed.
+- **For [human partner] to double-check:**
+  1. Leave Task 6 to finish, or interrupt it? The evidence says it is progressing, not stuck — but after the 11 GREEN runs it still owes scenario 11, 20 micro-test reps, and an open-ended refactor loop, and Task 7 hasn't started.
+  2. `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` is 20 here. Everything queued behind that number is why throughput looks like zero.
+  3. The harness bug filed at `MAIN:693` via `SendFeedback` — worth confirming it landed.
+
+## 9. Similar sessions
+
+Not requested; not run.
+
+---
+
+**One thing I should flag, since honesty matters more than tidiness:** I am myself one of the GREEN scenario runners this report describes. My prompt carries the exact preamble and guard line from ruling 2 and ruling 3 of the `MAIN:1091` dispatch. So this report is both a diagnosis of session 982c4a8b and a piece of its own eval data. Everything above is cited from disk, but you should know the reader and the subject are the same tree.
+```
+
+Violations: none against this scenario's pass criteria (reads the tail with
+size-safe commands; notes in-progress; no whole-file read). It identified the
+five longest lines (25–80 KB) and recorded that they were "never printed"; it
+recorded "Session was in progress at read time: yes" with the file growing
+1105 → 1107 lines mid-analysis and labelled every count a snapshot and every
+token total a floor. §7 states involvement ("possible") and stops: "Whether
+any of that should change is not for this report."
+
+Note, not scored here: intake was again derived rather than asked ("Intake was
+not run interactively — this run was told to write questions and stop rather
+than block"). Scenario 10's pass criteria do not cover intake, but this is the
+same behaviour scenario 9 shows, and it is what refactor round 1 addresses.
+
+Contamination note: the fixture is the live controller session, so this runner
+necessarily read the session's own ledger and its own dispatch prompt, and it
+disclosed that at the end. It explicitly refused to read `CREATION-LOG.md`
+("It is the eval answer key for the scenarios running right now"). The same
+structural quirk was recorded for the baseline runs against this fixture.
+
+Compared to baseline: baseline was recorded as "extraction method not visible
+in the final response." With the skill the extraction method is stated
+explicitly — long lines identified and skipped, `.meta.json`/`message.usage`
+fields only, no content reads of the 2.6 MB subagent transcript — and the
+in-progress caveat is a required report section rather than an aside.
+
+<!-- GREEN-SCENARIOS-END -->
+
 ## Micro-tests
 
 ## Refactor rounds
