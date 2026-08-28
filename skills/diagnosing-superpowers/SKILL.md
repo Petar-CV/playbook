@@ -73,7 +73,7 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
 | "Why did it do this extra work?" | repeated-work, plan-adherence |
 | "Why is it so expensive?" | cost-and-time |
 | "What the hell is it doing?" (still running) | skill-timeline; note in-progress in coverage |
-| "It ignored the plan" | plan-adherence, look at compaction lines first |
+| "It ignored the plan" | plan-adherence, compaction lines first |
 | "Skill X never fired" | skill-timeline |
 
 ## Hard rules
@@ -97,9 +97,9 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
 - **Intake before analysis.** Nothing in steps 2–7 starts until your
   partner has answered. If they are away, write the questions and stop.
   A statement you reconstructed for them is not an answer. An
-  already-scoped request — one specific event, or what is running now —
-  is itself the statement: answer it, then ask. A whole-session "why" is
-  a complaint.
+  already-scoped request — one specific event, what is running now, or
+  the analysis to run — is itself the statement: answer it, then ask.
+  A whole-session "why" is a complaint.
 
 ## Red Flags
 
