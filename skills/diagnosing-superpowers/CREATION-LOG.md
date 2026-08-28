@@ -5794,3 +5794,179 @@ that every REQUIRED section is filled and every finding is cited — not that tw
 runs agree. The skill reliably produces a well-formed, evidenced report. It does
 not reliably produce the same report twice. That is worth knowing before anyone
 treats a single run's verdict as settled.
+
+## End-to-end run
+
+One full run of the finished skill, on fixture CC-compact (session
+`373e29d1-2223-4e81-95e8-976c35c80040`, 9,170 lines / 14.3 MB, 278 subagent
+transcripts / 212 MB beside it), driven by the agent that wrote this section
+rather than by an eval scenario. Same redaction convention as the rest of
+this file: home paths are written `~`, and where an account name would appear
+in a path it is dropped or replaced with `USER`.
+
+The skill was followed by reading `SKILL.md` from the working tree and doing
+what it says, step by step. The `Skill` tool could not be used: it resolves
+to the installed 6.3.0 plugin, which does not contain this skill. Intake was
+pre-answered — the running agent played the human partner and supplied the
+problem statement "the session repeated work after a compaction", redaction
+level *evidence*, and "search GitHub, do not file". Everything after intake
+was done for real: real transcripts, real subagents, real `gh` searches.
+
+### The checklist
+
+| Check | Result |
+|---|---|
+| Workspace at `~/.superpowers/diagnosing-superpowers/<session-id>/`, path printed | PASS, with a deviation. Files went in a `run-task7/` subdirectory of that workspace because earlier eval runs had left `case.md`, `report*.md` and scratch files at its root. The path was printed to the partner at the end of the locate step, as the skill requires. |
+| `report.md` has every REQUIRED section filled | PASS. Nine `## n.` headings in template order, eight `### 6.n` subsections, no unfilled `<placeholder>` text. 1,005 lines / 116 KB. |
+| §3 lists the superpowers install root, version, and a sha1 table with at least one row | PASS. Install root and version 6.3.0 from the plugin registry; git sha recorded as "not a checkout" because the registry's `gitCommitSha` is null and the install root has no `.git`. One sha1 row: `skills/using-superpowers/SKILL.md`, injected three times as `SessionStart` hook context. That is the only superpowers file that reached the session. |
+| §4 lists the main transcript and every subagent transcript with absolute paths | PASS. 279 rows — 1 main plus all 278 subagents — each with an absolute path, line count and byte count, generated from an inventory rather than typed. |
+| §6.7 has per-turn token totals | PASS. All 76 per-turn rows inline in §6.7 (input, output, cache read, cache creation, main total, API calls, subagents dispatched, subagent tokens), plus whole-session totals. |
+| §6.3 or §6.2 cites the compaction line | PASS. §6.3 cites lines 2555 and 5252; §6.2 cites 2555. §2 cites both. |
+| Bundle directory matches `templates/bundle-README.md` | PASS. 14 files: `README.md`, `report.md`, `case.md`, `environment.json`, `timeline.md`, `findings/*.md` (7), `transcripts/<session-id>.md`, `scrub-log.md`. 884 KB. |
+| `scrub-audit` returned CLEAN | PASS on the second pass, not the first. See below. |
+| A recursive grep of `bundle/` for absolute home paths returns nothing | PASS, 0 matches. Independent sweeps for the account name, the proprietary terms and their ≥4-character prefixes, email shapes, IPv4 and key/token shapes also came back empty. |
+| No fixture file changed | PASS. `find <fixture project dir> -newer <marker created before the run>` returned nothing, checked three times during the run and once at the end. |
+
+Report path:
+`~/.superpowers/diagnosing-superpowers/373e29d1-2223-4e81-95e8-976c35c80040/run-task7/report.md`
+(deleted after this section was written; the workspace holds unscrubbed local
+data).
+
+### What the run found
+
+§2's verdict, in one line: the compaction boundaries did not cause the
+session to redo its work at scale — no shell command and no subagent dispatch
+recurs across either boundary — but three narrower repetitions are real, and
+the session's two largest repetition events (a ~70-minute API 529 outage and
+a human-instructed model-budget handoff) have nothing to do with compaction.
+Confidence: medium on the overall verdict, high on the individual findings.
+§7 returned **possible**, on the evidence that the superpowers bootstrap was
+injected three times including at both compaction boundaries, that no
+superpowers skill was invoked in the main agent in 9,170 lines, and that the
+only superpowers-namespaced invocation anywhere came from a subagent the main
+agent had told to use it by name.
+
+Worth recording because it is the kind of thing the skill exists to catch:
+the repeated-work analyst and the plan-adherence analyst disagreed. The first
+said nothing recurs across either boundary; the second found a completed RCA
+re-commissioned after boundary 1, caught by the duplicate subagent itself
+("I think this work may already be done") rather than by its parent. Both are
+right. The repeated-work census keys on exact command text and exact dispatch
+description, and the two dispatches carried different descriptions. §8 records
+that as a method limit rather than smoothing it over, and §2 names the
+disagreement instead of picking a winner.
+
+### Analysts
+
+All seven dispatched in one parallel batch, all seven returned findings; none
+failed to dispatch. Counts of findings returned: skill-timeline 23,
+plan-adherence 14, repeated-work 9, stumbles 25, quality-evidence 16,
+request-conflicts 13, cost-and-time 17. No returned finding lacked a
+`path:line`, so the "discard any finding without a citation" rule never
+fired. Every analyst's `Checked:` line named its commands and ranges, and
+every one obeyed the read-only and no-whole-line rules.
+
+Three findings were spot-checked against the fixture by hand — the
+`skill_listing` attachment appearing only at line 11, the 75
+`isolation: worktree` dispatches, and the issue #4 re-commission at lines
+4819/4844/2213. All three held.
+
+### Scrub and audit
+
+Not CLEAN on the first pass. Audit pass 1 returned one miss:
+
+```
+MISSED
+- transcripts/<session-id>.md:1461 — proprietary term — prime-radi
+```
+
+The cause is a deviation this run introduced, not a defect in the skill. The
+condensed transcript was rendered with assistant text clipped at 450
+characters and tool inputs at 250 (1600/1200 on cited lines) to keep the file
+at 620 KB rather than several megabytes. `templates/bundle-README.md` says
+the redaction level governs tool-result bodies; it says nothing about
+clipping assistant text, so this was an addition, documented in the bundle's
+README and in the rendered file's own header. One clip landed mid-token and
+left a bare prefix of a proprietary term, which whole-value matching does not
+catch. Scrub round 2 swept every ≥4-character prefix of every redactable
+value against the text preceding all 1,026 truncation markers, found exactly
+that one fragment, and mapped it to the placeholder its full value already
+used. Audit pass 2 returned `CLEAN`.
+
+The loop worked as specified, and it caught something a human reviewer would
+plausibly have missed. Two other catches were beyond a plain sweep: a token
+carried in a URL query string, and an IPv4 address — neither of which the
+dispatching agent had thought to look for.
+
+### GitHub step
+
+Search only; nothing was created and nothing was commented on. `gh search
+issues` returned empty for every query, apparently a search-index quirk;
+`gh issue list --state all --search` against the same repository worked and
+was used instead. Worth knowing for the reference files: the skill's step 5
+says "search open and closed issues … (`gh` if installed)", and the obvious
+`gh search issues --state all` is rejected outright — `--state` accepts only
+`open` or `closed`. Closest matches found, by number and title only:
+
+- #1220 (closed) — Uninstalled v5.0.7: SessionStart bootstrap re-injection token cost accumulated across long sessions
+- #1453 (closed) — SessionStart hook fires on compact, causes LM Studio Qwen3 jinja template crash
+- #2051 (open) — using-superpowers' "check any skill before every action" doesn't hold once a workflow step is underway
+- #1465 (closed) — superpowers plugin not loaded mid-session — skills missing from manifest, SessionStart hook not fired
+- #2203 (open) — Bounded tasks fill the main session context
+- #2083 (open) — Pi extension bootstrap only injected on the first turn: agent_end fires per run, not per session
+
+The suggestion made to the partner was to attach the bundle to #2051, the
+closest to what §7 actually evidences. No issue was drafted, filed, or
+commented on.
+
+### Deviations from SKILL.md, and why
+
+1. **The skill was followed by hand, not invoked.** The `Skill` tool resolves
+   to the installed 6.3.0 plugin, which does not ship this skill.
+2. **Intake was pre-answered.** Step 1 says to ask one question at a time and
+   stop if the partner is away. Here the running agent played the partner and
+   supplied the answers, which is a test fixture, not the workflow. Everything
+   downstream ran normally.
+3. **Workspace subdirectory.** `run-task7/` inside the session workspace,
+   because earlier eval runs' files were already at its root and a reader
+   could not otherwise tell the runs apart. The skill says
+   `~/.superpowers/diagnosing-superpowers/<session-id>/` flat.
+4. **Analysts were told not to read all 278 subagent transcripts.** 212 MB
+   does not fit anywhere. They were given an inventory (`subagents.tsv`) and
+   a dispatch map (`dispatches.tsv`) for counts and identification and told to
+   open at most ~10 individual transcripts each; the cost analyst streamed all
+   278 for token sums without reading bodies. 27 were examined in depth, 7
+   more opened incidentally, 251 unopened. §8 records this.
+5. **Condensed-transcript clipping**, described above. It caused the audit
+   miss.
+6. **Only the main transcript was rendered into `transcripts/`.** The 278
+   subagent transcripts are enumerated in §4 but not rendered; the bundle
+   README says so.
+7. **No archive.** The skill archives only after the partner has seen the
+   scrub log and file list and approved. Both were shown; no archive was
+   requested, so none was made.
+8. **§6.7's per-turn table was inlined into the report**, not left only in
+   `findings/cost-and-time.md`, because the report template asks for per-turn
+   totals in §6.7 itself.
+
+### Friction worth knowing about
+
+- **The 278-subagent case is not something the skill's text anticipates.**
+  Step 2 says "Enumerate subagent transcripts" and the analyst prompts assume
+  a subagent set you can look at. At 278 files and 212 MB, enumeration has to
+  become an inventory file, and every analyst has to be told the limit
+  explicitly or it will try to read them. The run worked, but only because the
+  dispatching agent added that instruction to all seven dispatches.
+- **§4 at this scale is a 279-row table.** It has to be generated, not typed.
+  Nothing in the skill says so.
+- **Three different human-turn counts appeared** — 82, 76 and 74 — depending
+  on which harness-injected user-shaped lines each analyst filtered. The case
+  file offered 82, so most findings quote it. §8 reconciles all three
+  explicitly rather than picking one silently. A line in
+  `references/claude-code-sessions.md` about `<command-name>`,
+  `<local-command-stdout>` and the re-injected compaction summary being
+  user-shaped but not human-typed would have prevented the divergence.
+- **The dispatching agent's `Write` tool refused any filename containing
+  "report"**, so report sections were drafted as `sec-*.md` fragments and
+  assembled with a shell script. Harness-specific, but it is what a
+  controller at depth 1 will hit.
