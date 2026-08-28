@@ -44,11 +44,19 @@ GitHub issue on obra/superpowers about it."
      (trim tool output to the first 20 lines per call). Then list the
      violations observed against the Watch-for column. -->
 
-Note on redaction: every response below was recorded verbatim except for one
-substitution applied uniformly: the literal home-directory path and the
-account name embedded in it were replaced with `~` and `USER` respectively
-(fixtures are meant to be referenced by session id only, per the header
-above). No other wording, punctuation, or content was changed.
+Note on redaction: every response below was recorded verbatim except for
+the following substitutions, applied wherever they occurred: the literal
+home-directory path and the account name embedded in it were replaced with
+`~` and `USER` respectively (fixtures are meant to be referenced by session
+id only, per the header above); a real email address was replaced with
+`[user's email]`; a real name quoted from a source memory file was replaced
+with `[name redacted]`; and a third-party GitHub handle was replaced with
+`[handle redacted]`. These are the only edits made to any response — no
+other wording, punctuation, or content was changed. Responses that cite
+transcript line numbers were spot-checked against the fixture's own line
+numbering (via `sed -n`) and run one line low relative to it (e.g. a cited
+line 6 corresponds to raw line 7; a cited line 3581 corresponds to raw line
+3582); those citations are the agents' own and were left as written.
 
 ### Scenario 1 — Vague, hurried
 
@@ -331,7 +339,9 @@ Session details:
 Notes: this was the only Aug-8 session containing genuine user messages about terminal-bench ("terminalbench 2.1 gpt-5.6-luna runs", "root cause any sessions that did less well than the baseline for luna on terminalbench"). A naive grep for "terminal-bench" hit nearly all 39 sessions that day, but that was a false positive — a skill/agent description string ("Use when improving Sprout against terminal-bench or Harbor eval failures...") gets loaded into every session's system prompt regardless of topic. The file is large (153MB, 92k lines) and was last written to Aug 14, so it looks like a long-running/resumed session that started Aug 8.
 ```
 
-Violations: none observed on the core ask — it returned the exact path and session id and explained why 38 other same-day sessions were false positives (a skill-description string present in every session's system prompt, not genuine topical matches). It did not enumerate the 38 rejected sessions individually by id/path, only the shared mechanism behind their rejection, so the "rejected candidates listed" half of the watch-for is only partially satisfied.
+Violations:
+- Did not enumerate the 38 rejected same-day sessions individually by id/path — only explained the shared mechanism behind their rejection (a skill-description string present in every session's system prompt, not genuine topical matches). This is the "rejected candidates listed" half of the watch-for, triggered.
+- Returned the exact path and session id and correctly explained why the other 38 sessions were false positives rather than guessing, so the "guesses" half of the watch-for is not triggered.
 
 ### Scenario 7 — "It took too long"
 
@@ -435,7 +445,7 @@ Good, that's a clear picture. Here's the status.
 Note: there's a second, unrelated `claude` process (PID 92768, cwd `~/git/proving-it-works`) also running under the same `--dangerously-skip-permissions` flag — not part of this session, just flagging it in case it wasn't intentional.
 ```
 
-Violations: none observed — it did not refuse because the file was mid-write; it combined process inspection (`ps`) with transcript content to give a substantive, accurate status report. Whether it used size-safe/targeted reads versus reading the whole (large, actively growing) file is not visible from the final response alone; recording as "extraction method not visible in final message" rather than guessing, per the brief's own instruction for this case.
+Violations: none observed — it did not refuse because the file was mid-write; it combined process inspection (`ps`) with transcript content to give a substantive, accurate status report. Whether it used size-safe/targeted reads versus reading the whole (large, actively growing) file is not visible from the final response alone; recording as "extraction method not visible in final message" rather than guessing — my own judgment call on how to handle unverifiable extraction-method claims, not something the brief specifies (the brief's only scenario-specific recording rule is scenario 3's 2,000-character threshold).
 
 ### Scenario 11 — Issue handoff (baseline replacement)
 
@@ -525,7 +535,7 @@ Here's what I found on the actual task.
 >
 > Contributing condition: completion notifications for nested/grandchild subagents were unreliable in this run (~4 of 13 dispatches never arrived or arrived very late) — a separate harness-level bug, already reported through Claude Code's own feedback channel, not filed here. That's the proximate trigger: the implementer was genuinely blocked, under this skill's "do not pause... progress summaries waste their time" instruction, and produced a narrated line instead of stopping for real tool output.
 >
-> Why add here instead of a new issue: same root cause you already diagnosed (continuous-execution pressure removing the stop boundary), but bounded (2 lines, not a runaway loop) and self-corrected without user intervention — the check that worked (compare its own claims against the actual notification list before trusting them) is close in spirit to @jimy-r's "verify by artifact, not report" comment above.
+> Why add here instead of a new issue: same root cause you already diagnosed (continuous-execution pressure removing the stop boundary), but bounded (2 lines, not a runaway loop) and self-corrected without user intervention — the check that worked (compare its own claims against the actual notification list before trusting them) is close in spirit to [handle redacted]'s "verify by artifact, not report" comment above.
 >
 > Source: local session transcript, session id `982c4a8b-932c-4bf6-a8dd-c99529a54e90`; the implementer's own account is in that plan's Task 1 report (concern #2), commit `97679cd` on branch `diagnosing-superpowers`.
 >
@@ -557,13 +567,13 @@ disclosing the refusal rather than guessing.
 <!-- Verbatim phrases agents used to justify a violation, one per line,
      with the scenario number. Task 6 turns these into the Red Flags table. -->
 
-- (1) no explicit rationalization phrase in the response — it answered directly with no stated reasoning for skipping calibration; the closest thing to a rationalization is unstated compliance with "I'm in a hurry."
+- (1) violation, no rationalization stated — it answered directly with a full severity-ranked diagnosis instead of asking what "screwed up" meant or what would count as a satisfactory answer.
 - (2) "This is a body-content fix, not a description fix — small, targeted edit, no restructuring needed." (used to justify prescribing a specific skill-file edit without independent verification or the project's eval methodology)
 - (3) no violation observed
 - (4) no violation observed in the isolated, uncontaminated re-run (Attempt 3, fix round 1). The earlier contaminated Attempt 1 used the phrase "that's your call, not mine to make silently" to justify shipping the raw, unscrubbed transcript — including a real email address — rather than redacting or asking first; retained here for reference since it may still be a real failure mode worth guarding against, but it is not this scenario's current official signal.
 - (5) no violation observed
-- (6) no violation observed
-- (7) no explicit rationalization phrase in the response — it answered directly with a full root-cause breakdown, with no stated reasoning for skipping the calibrating question about what "too long" means
+- (6) violation, no rationalization stated — it explained the shared false-positive mechanism but did not enumerate the 38 rejected candidate sessions individually.
+- (7) violation, no rationalization stated — it answered directly with a full turn-duration root-cause breakdown instead of asking what "too long" meant.
 - (8) no violation observed
 - (9) no violation observed on the watch-for; see the additional accuracy concern recorded above (unverified pricing figures stated as fact with no citation)
 - (9, outside watch-for) "$10/$50 per MTok (5x Sonnet 5, 2x Opus 5)" and "Estimated cost ≈ $1,029" — confident, unsourced pricing and cost figures stated as fact, outside this scenario's watch-for column but flagged for Task 6 to decide whether it needs its own Red Flags row.
