@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# Stage exactly one task's declared files for the human partner's review.
+# Stage one task's declared files -- or, in the express lane, the whole plan's --
+# for the human partner's review.
 #
 # Refuses a non-empty index: two stages in the index at once destroys the review
 # surface, because `git diff --staged` can no longer tell one stage's work from
-# another's. The controller is the only actor that runs this; agents never touch
-# the index at all.
+# another's. `--all` is not an exception to that rule but an application of it:
+# it builds ONE deliberate combined surface in a single call, so it too demands
+# the index start clean. The controller is the only actor that runs this; agents
+# never touch the index at all.
 #
 # Usage: stage-task PLAN_FILE N
+#        stage-task PLAN_FILE --all
 set -euo pipefail
 
 if [ $# -ne 2 ]; then
-  echo "usage: stage-task PLAN_FILE N" >&2
+  echo "usage: stage-task PLAN_FILE N|--all" >&2
   exit 2
 fi
 
@@ -18,32 +22,80 @@ plan=$1
 n=$2
 [ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
 
+if [ "$n" = "--all" ]; then label="the full plan"; else label="task $n"; fi
+
 if ! git diff --cached --quiet; then
-  echo "index already holds staged changes; commit or unstage before staging task $n" >&2
+  echo "index already holds staged changes; commit or unstage before staging $label" >&2
   git diff --cached --name-only >&2
   exit 4
 fi
 
 here=$(cd "$(dirname "$0")" && pwd)
-files=$("$here/plan-tasks" "$plan" | awk -F'\t' -v n="$n" '$1==n{print $3}')
-if [ -z "$files" ] || [ "$files" = "none" ] || [ "$files" = "MISSING" ]; then
-  echo "task $n has no declared files in $plan" >&2
-  exit 3
-fi
-IFS=',' read -r -a paths <<< "$files"
 
-missing=""
-for p in "${paths[@]}"; do
-  # Tracked-but-deleted is legitimate; never-existed is a mismatch.
-  if [ ! -e "$p" ] && ! git ls-files --error-unmatch -- "$p" >/dev/null 2>&1; then
-    missing="$missing $p"
+task_files() {
+  "$here/plan-tasks" "$plan" | awk -F'\t' -v n="$1" '$1==n{print $3}'
+}
+
+task_title() {
+  sed -n -E "s/^#+[[:space:]]+Task[[:space:]]+$1:[[:space:]]*//p" "$plan" | head -1
+}
+
+# Tracked-but-deleted is legitimate; never-existed is a mismatch.
+missing_paths() {
+  local p out=""
+  for p in "$@"; do
+    if [ ! -e "$p" ] && ! git ls-files --error-unmatch -- "$p" >/dev/null 2>&1; then
+      out="$out $p"
+    fi
+  done
+  printf '%s' "$out"
+}
+
+read_task_paths() {
+  local t=$1 files
+  files=$(task_files "$t")
+  if [ -z "$files" ] || [ "$files" = "none" ] || [ "$files" = "MISSING" ]; then
+    echo "task $t has no declared files in $plan" >&2
+    exit 3
   fi
-done
-if [ -n "$missing" ]; then
-  echo "task $n declares files that do not exist and are not tracked:$missing" >&2
-  echo "the implementer did not produce what the plan declared" >&2
-  exit 5
+  IFS=',' read -r -a paths <<< "$files"
+  local miss; miss=$(missing_paths "${paths[@]}")
+  if [ -n "$miss" ]; then
+    echo "task $t declares files that do not exist and are not tracked:$miss" >&2
+    echo "the implementer did not produce what the plan declared" >&2
+    exit 5
+  fi
+}
+
+if [ "$n" != "--all" ]; then
+  read_task_paths "$n"
+  git add -A -- "${paths[@]}"
+  git diff --cached --stat
+  exit 0
 fi
 
-git add -A -- "${paths[@]}"
-git diff --cached --stat
+nums=$("$here/plan-tasks" "$plan" | cut -f1)
+[ -n "$nums" ] || { echo "no tasks found in $plan" >&2; exit 3; }
+
+# Validate every task before staging any of it. A partial combined stage is
+# worse than no stage at all: the human reviews it believing it is the whole
+# plan, and commits a plan that was never finished.
+all=()
+for t in $nums; do
+  read_task_paths "$t"
+  all+=("${paths[@]}")
+done
+
+git add -A -- "${all[@]}"
+
+# One index, but the review still has to read as N stages -- otherwise the
+# express lane has traded a reviewable surface for an unreadable one.
+for t in $nums; do
+  read_task_paths "$t"
+  title=$(task_title "$t")
+  printf 'Task %s%s\n' "$t" "${title:+: $title}"
+  git diff --cached --stat -- "${paths[@]}" | sed 's/^/  /'
+done
+
+printf '\nCombined stage: %s task(s)\n' "$(printf '%s\n' $nums | wc -l | tr -d ' ')"
+git diff --cached --stat | tail -1

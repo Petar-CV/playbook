@@ -189,19 +189,42 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After saving the plan, offer execution choice, annotated with the plan's own
+shape. Run `../subagent-driven-development/scripts/plan-tasks <plan>` for the
+parsed graph: the file count is the size of the union of every task's `Files:`
+entries, the task count is the number of records, wave depth is the longest
+`Depends on:` chain, and the `Exclusive:` column lists the contended resources.
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Three execution options:**
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, you review and commit each stage
 
 **2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
 
+**3. Express lane** - Same as 1, but I run the whole graph to completion and present one combined diff at the end. You commit once instead of once per stage.
+
+```text
+  This plan:  6 files · 5 tasks · 2 waves
+              Exclusive: none
+```
+
 **Which approach?"**
 
-**If Subagent-Driven chosen:**
+Offer all three every time, and never gate option 3 behind a size threshold.
+The numbers are the argument: a plan reading `200 files · 47 tasks · 9 waves`
+argues against the express lane without a rule to forbid it, and a threshold
+constant would only be a standing argument about where to set it. Your partner
+reads two lines and decides in seconds; that is cheaper and more accurate than
+any cutoff you could pick for them.
+
+State the cost when you offer it. With no per-stage gate, a task can burn all
+five fix rounds and land an adjudicated ruling your partner would have
+overruled in seconds. Fewer interruptions is the point; that is what buys them.
+
+**If Subagent-Driven or Express lane chosen:**
 - **REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development
 - Fresh subagent per task + two-stage review
+- Name the express lane when you invoke the skill — it changes only the commit gate
 
 **If Inline Execution chosen:**
 - **REQUIRED SUB-SKILL:** Use superpowers:executing-plans

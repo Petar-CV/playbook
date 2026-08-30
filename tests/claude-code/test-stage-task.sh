@@ -25,6 +25,30 @@ main() {
 
     echo "a" > mine.txt
     echo "b" > theirs.txt
+    echo "c" > ours.txt
+    cat > plan-all.md <<'ALLPLAN'
+### Task 1: Mine
+
+**Depends on:** none
+**Files:**
+- Modify: `mine.txt`
+**Exclusive:** none
+**Interfaces:**
+- Consumes: nothing
+- Produces:
+  - `mine`
+
+### Task 2: Ours
+
+**Depends on:** none
+**Files:**
+- Modify: `ours.txt`
+**Exclusive:** none
+**Interfaces:**
+- Consumes: nothing
+- Produces:
+  - `ours`
+ALLPLAN
     cat > plan.md <<'FIXPLAN'
 ### Task 1: Mine
 
@@ -53,6 +77,7 @@ FIXPLAN
     # Two agents have edited the shared tree; only task 1's file may be staged.
     echo "mine changed" > mine.txt
     echo "theirs changed" > theirs.txt
+    echo "ours changed" > ours.txt
 
     "$SDD_SCRIPTS/stage-task" plan.md 1 > /dev/null
     [[ "$(git diff --cached --name-only)" == "mine.txt" ]] \
@@ -75,6 +100,39 @@ FIXPLAN
     rc=0
     "$SDD_SCRIPTS/stage-task" plan.md >/dev/null 2>&1 || rc=$?
     [[ "$rc" -eq 2 ]] && pass "wrong arg count exits 2" || fail "wrong arg count exits 2"
+
+    # --- express lane: one combined stage for the whole plan ---------------
+    # The express lane trades N review surfaces for one, so --all must carry
+    # every task's declared work and nothing else.
+    local out
+    out="$("$SDD_SCRIPTS/stage-task" plan-all.md --all)"
+    [[ "$(git diff --cached --name-only | sort | tr '\n' ' ')" == "mine.txt ours.txt " ]] \
+        && pass "--all stages the union of every task's declared files" \
+        || fail "--all stages the union (got '$(git diff --cached --name-only | tr '\n' ' ')')"
+
+    # A combined diff is only reviewable if it still reads as N stages.
+    grep -q "Task 1" <<< "$out" && grep -q "Task 2" <<< "$out" \
+        && pass "--all reports a per-task breakdown" \
+        || fail "--all reports a per-task breakdown (got '$out')"
+
+    # The guard that protects the single-task surface protects this one too.
+    rc=0
+    "$SDD_SCRIPTS/stage-task" plan-all.md --all >/dev/null 2>&1 || rc=$?
+    [[ "$rc" -eq 4 ]] && pass "--all refuses a dirty index (exit 4)" || fail "--all refuses a dirty index (got $rc)"
+
+    git restore --staged mine.txt ours.txt
+
+    # An undeclared-but-unwritten path is still a plan/implementation mismatch,
+    # and --all must name which task lied rather than staging a partial plan.
+    rc=0
+    out="$("$SDD_SCRIPTS/stage-task" plan.md --all 2>&1)" || rc=$?
+    [[ "$rc" -eq 5 ]] && pass "--all exits 5 on a declared path never written" || fail "--all exits 5 on a declared path never written (got $rc)"
+    grep -q "task 2" <<< "$out" \
+        && pass "--all names the task that failed to produce its file" \
+        || fail "--all names the task that failed to produce its file (got '$out')"
+    git diff --cached --quiet \
+        && pass "--all stages nothing when a declared path is missing" \
+        || fail "--all stages nothing when a declared path is missing"
 
     echo ""
     if [[ "$FAILURES" -eq 0 ]]; then echo "All stage-task tests passed"; else

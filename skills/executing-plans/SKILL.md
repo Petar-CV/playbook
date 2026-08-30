@@ -36,7 +36,10 @@ For each task:
 
 This skill executes sequentially, so exactly one task is ever staged. If you
 have subagents available, superpowers:subagent-driven-development runs
-independent tasks concurrently behind the same gate.
+independent tasks concurrently behind the same gate, and can collapse that gate
+to a single combined review at the end — its express lane — when your partner
+chooses that at the plan handoff. This skill has no express lane: staging one
+task at a time is the only thing making sequential execution reviewable.
 
 ### Step 3: Complete Development
 

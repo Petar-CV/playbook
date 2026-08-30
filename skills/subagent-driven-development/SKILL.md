@@ -18,6 +18,8 @@ ledger and the tool results carry the record.
 
 The commit gate is an expected stop, and it halts only the commit pipeline: while a stage waits for your partner's review, keep dispatching, keep reviewing, keep parking. An idle pipeline during a review is wasted time they did not ask you to spend.
 
+If your partner chose the express lane at the plan handoff, that stop does not exist at all — see [The express lane](#the-express-lane). Completion and the four hard stops are then the only things that stop you.
+
 **Rulings, not stalls.** A running plan does not wait on a human. Conflicts,
 ambiguities, plan defects, a cap you would have asked to exceed — decide
 them. The spec is the binding authority, the plan is its argument, and your
@@ -96,6 +98,7 @@ digraph process {
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer (../requesting-code-review/code-reviewer.md)" [shape=box];
     "Final findings? ONE fix dispatch, one scoped re-review, adjudicate residuals" [shape=box];
+    "Express lane: stage all (./scripts/stage-task --all), partner commits once" [shape=box];
     "Final review clean: delete this plan's workspace" [shape=box];
     "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
@@ -133,6 +136,8 @@ digraph process {
     "More tasks remain?" -> "Dispatch READY set (./scripts/ready-set) in one message" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer (../requesting-code-review/code-reviewer.md)" [label="no"];
     "Dispatch final code reviewer (../requesting-code-review/code-reviewer.md)" -> "Final findings? ONE fix dispatch, one scoped re-review, adjudicate residuals";
+    "Final findings? ONE fix dispatch, one scoped re-review, adjudicate residuals" -> "Express lane: stage all (./scripts/stage-task --all), partner commits once" [label="express lane"];
+    "Express lane: stage all (./scripts/stage-task --all), partner commits once" -> "Final review clean: delete this plan's workspace";
     "Final findings? ONE fix dispatch, one scoped re-review, adjudicate residuals" -> "Final review clean: delete this plan's workspace";
     "Final review clean: delete this plan's workspace" -> "Use superpowers:finishing-a-development-branch";
 }
@@ -363,6 +368,72 @@ Review with `git diff --staged`. Commit when ready, or tell me what to change.
    the next parked stage whose review is clean. If they committed only part of
    the staged set or amended it, the stage is not complete until its declared
    files are clean.
+
+### The express lane
+
+Your partner may have chosen the express lane at superpowers:writing-plans'
+handoff. It changes exactly one thing: **steps 3 and 4 above do not run.** There
+is no baton, nothing is ever staged mid-run, and the commit pipeline never
+stalls because there is no commit until the end.
+
+Everything else is untouched. `ready-set` still schedules, implementers still
+implement, task reviewers still review, the five-round breaker still trips and
+still ends in an adjudicated ruling, the ledger still records every line, and
+the four hard stops still stop you. Do not invent new reasons to interrupt: a
+cap adjudication is a ledger entry here, not a check-in. Removing the baton also
+removes the only thing that was throttling width — the graph now runs as wide as
+`ready-set` allows for the whole run.
+
+Step 2 stops being merely prudent and becomes the run's only memory. With no
+intermediate commits, the park refs and the ledger are the entire history of
+what happened; park on every agent return without exception.
+
+The final review changes shape, because `MERGE_BASE..HEAD` is empty when nothing
+has been committed. Use the whole-plan working-tree package instead:
+
+```bash
+scripts/review-package PLAN_FILE --plan "$(git merge-base main HEAD)"
+```
+
+When every task is review-clean and the final review is clean, stage the run
+once and present it:
+
+```bash
+scripts/stage-task PLAN_FILE --all
+```
+
+`--all` refuses a dirty index for the same reason the single-task path does, and
+it validates every task before staging any of it — a partial combined stage
+reads to your partner as a finished plan and gets committed as one.
+
+```text
+Express lane complete: 5 tasks staged as one review.
+Proposed:  feat(api): add user CRUD endpoints with validation
+
+Task 1: Schema
+  src/models/user.py   |  34 ++++
+Task 2: API endpoints
+  src/api/users.py     |  81 ++++++++
+Task 3: Validation
+  src/api/validate.py  |  47 +++++
+...
+
+Tests:    38/38 passing, output pristine
+Review:   all tasks clean; final whole-branch review clean
+Rulings:  2 — Task 3 interface widened; Task 5 test split. Ledger has both.
+
+Review with `git diff --staged`. Commit when ready, or tell me what to change.
+```
+
+Surface every `Ruling:` from the ledger in that summary. In the normal gate your
+partner meets each ruling as it lands and can overrule it while it is cheap;
+here this is their first and only sight of them, so a ruling you leave out is a
+ruling they never got to overrule. That is the trade they accepted, and it only
+stays fair if you report it.
+
+If they ask for changes, the fix loop below is unchanged and still uncapped:
+restore the index, run their words through as findings, and re-stage with
+`--all`.
 
 ### When your partner asks for changes
 
@@ -621,7 +692,9 @@ parked-with-ruling at the cap.
 
 The final whole-branch review gets a package too: run
 `scripts/review-package PLAN_FILE MERGE_BASE HEAD` (MERGE_BASE = the commit the
-branch started from, e.g. `git merge-base main HEAD`) and include the
+branch started from, e.g. `git merge-base main HEAD`) — or, in the express lane,
+`scripts/review-package PLAN_FILE --plan MERGE_BASE`, because a run that has
+committed nothing has an empty commit range — and include the
 printed path in the final review dispatch, so the final reviewer reads
 one file instead of re-deriving the branch diff with git commands. Dispatch
 on the most capable available model (see Model Selection), using
@@ -671,6 +744,9 @@ Use superpowers:finishing-a-development-branch.
 
 | Excuse                                                            | Reality                                                                                                                                      |
 | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Express lane means I can commit it myself"                        | It collapses how many gates your partner holds, never who holds them. You stage; they commit. Always.                                        |
+| "Nothing stalls in the express lane, so parking is busywork"       | With no intermediate commits, the park refs and the ledger are the run's entire history. Park on every return.                               |
+| "I'll summarize the rulings rather than list them"                 | The express lane is their only sight of every ruling. A ruling you compress out is one they never got to overrule.                            |
 | "Close enough on spec compliance"                                 | Reviewer found spec gaps = not done. Fix or hit the cap and adjudicate — those are the only exits.                                           |
 | "I'll fix it myself, dispatching is overhead"                     | Controller fixes pollute your context and skip review. Resume the implementer.                                                               |
 | "One more round will converge"                                    | Past the cap, rounds don't converge — the failure is structural. Adjudicate and route.                                                       |

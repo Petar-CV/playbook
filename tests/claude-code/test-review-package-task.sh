@@ -71,6 +71,56 @@ FIXPLAN
         pass "fix delta excludes already-reviewed content"
     fi
 
+    # --- express lane: one whole-plan package from the working tree ---------
+    # The express lane commits nothing until the end, so BASE..HEAD is empty
+    # and the final whole-branch review needs a working-tree package instead.
+    cat > plan-express.md <<'EXPRESSPLAN'
+### Task 1: Mine
+
+**Depends on:** none
+**Files:**
+- Modify: `mine.txt`
+- Create: `brand-new.txt`
+**Exclusive:** none
+**Interfaces:**
+- Consumes: nothing
+- Produces:
+  - `mine`
+
+### Task 2: Theirs
+
+**Depends on:** none
+**Files:**
+- Modify: `theirs.txt`
+**Exclusive:** none
+**Interfaces:**
+- Consumes: nothing
+- Produces:
+  - `theirs`
+EXPRESSPLAN
+
+    out="$("$SDD_SCRIPTS/review-package" plan-express.md --plan)"
+    pkg="$(echo "$out" | sed -n 's/^wrote \([^:]*\):.*/\1/p')"
+    grep -q "my change" "$pkg" && grep -q "another agent mid-edit" "$pkg" \
+        && pass "--plan covers every task, not one" \
+        || fail "--plan covers every task, not one"
+    grep -q "created by me" "$pkg" && pass "--plan includes untracked new files" || fail "--plan includes untracked new files"
+
+    # Handing the reviewer the plan as a diff wastes the context the package exists to save.
+    if grep -q "EXPRESSPLAN\|Task 2: Theirs" "$pkg"; then
+        fail "--plan must exclude the plan document itself"
+    else
+        pass "--plan excludes the plan document itself"
+    fi
+
+    # An explicit BASE catches work committed on the branch before the plan ran.
+    out="$("$SDD_SCRIPTS/review-package" plan-express.md --plan HEAD)"
+    echo "$out" | grep -q "whole plan" && pass "--plan accepts an explicit BASE" || fail "--plan accepts an explicit BASE (got '$out')"
+
+    rc=0
+    "$SDD_SCRIPTS/review-package" plan-express.md --plan HEAD extra-arg >/dev/null 2>&1 || rc=$?
+    [[ "$rc" -eq 2 ]] && pass "--plan rejects surplus args (exit 2)" || fail "--plan rejects surplus args (got $rc)"
+
     # The legacy commit-range mode must still work.
     git add -A && git commit -q -m second
     out="$("$SDD_SCRIPTS/review-package" plan.md HEAD~1 HEAD)"

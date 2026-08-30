@@ -6,6 +6,7 @@
 #
 # Usage: review-package PLAN_FILE BASE HEAD [OUTFILE]      (commit-range mode)
 #        review-package PLAN_FILE --task N [--since-park]  (working-tree mode)
+#        review-package PLAN_FILE --plan [BASE]            (whole-plan working tree)
 # Default OUTFILE: <repo-root>/.superpowers/sdd/<plan-basename>/review-<base7>..<head7>.diff
 # (named per range, so a re-review after fixes gets a distinct fresh file).
 set -euo pipefail
@@ -13,6 +14,7 @@ set -euo pipefail
 usage() {
   echo "usage: review-package PLAN_FILE BASE HEAD [OUTFILE]" >&2
   echo "       review-package PLAN_FILE --task N [--since-park]" >&2
+  echo "       review-package PLAN_FILE --plan [BASE]" >&2
   exit 2
 }
 
@@ -85,6 +87,48 @@ if [ "$2" = "--task" ]; then
   } > "$out"
 
   echo "wrote ${out}: task ${n}, $(wc -c < "$out" | tr -d ' ') bytes"
+  exit 0
+fi
+
+# Whole-plan working-tree mode, for the express lane's final review. That run
+# commits nothing until the end, so BASE..HEAD is empty and a commit-range
+# package would hand the final reviewer an empty diff. BASE defaults to HEAD,
+# which in an express run is still the commit the branch started from.
+if [ "$2" = "--plan" ]; then
+  [ $# -le 3 ] || usage
+  base=${3:-HEAD}
+  git rev-parse --verify --quiet "$base" >/dev/null || { echo "bad BASE: $base" >&2; exit 2; }
+
+  ws=$("$here/sdd-workspace" "$plan")
+  # The plan and spec are scaffolding the reviewer already has; carrying them
+  # in the package spends the context the package exists to save.
+  excl=(":(exclude)$plan" ":(exclude)docs/superpowers/specs" ":(exclude)docs/superpowers/plans")
+
+  out="$ws/review-plan-$(date +%s).diff"
+  {
+    echo "# Review package: whole plan vs ${base} (working tree)"
+    echo
+    echo "## Scope"
+    echo "Every task in ${plan}, as one uncommitted change set. Nothing on this"
+    echo "branch is committed yet — the human partner commits once, after this"
+    echo "review. Judge it as a finished branch, not as work in progress."
+    echo
+    echo "## Files changed"
+    git --no-optional-locks diff --stat "$base" -- . "${excl[@]}"
+    echo
+    echo "## Diff"
+    git --no-optional-locks diff -U10 "$base" -- . "${excl[@]}"
+    echo
+    echo "## New files"
+    # Untracked files are invisible to `git diff`, so they need a synthetic
+    # new-file diff; --no-index exits 1 when files differ, the normal case here.
+    git --no-optional-locks ls-files --others --exclude-standard -- . "${excl[@]}" |
+      while IFS= read -r f; do
+        git --no-optional-locks diff --no-index -U10 /dev/null "$f" || true
+      done
+  } > "$out"
+
+  echo "wrote ${out}: whole plan vs ${base}, $(wc -c < "$out" | tr -d ' ') bytes"
   exit 0
 fi
 
