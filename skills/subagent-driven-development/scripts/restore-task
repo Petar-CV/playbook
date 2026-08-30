@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Restore one task's parked content into the working tree.
+#
+# --worktree without --staged means the index is never touched, so this is safe
+# while a different stage is staged for the human's review. It refuses outright
+# if any of THIS task's paths are staged, because overwriting the worktree copy
+# of a path under review would make `git diff --staged` describe content that no
+# longer exists.
+#
+# Usage: restore-task PLAN_FILE N
+set -euo pipefail
+
+if [ $# -ne 2 ]; then
+  echo "usage: restore-task PLAN_FILE N" >&2
+  exit 2
+fi
+
+plan=$1
+n=$2
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+
+here=$(cd "$(dirname "$0")" && pwd)
+slug=$(basename "$plan" .md)
+ref="refs/superpowers/sdd/$slug/task-$n"
+
+git rev-parse --verify --quiet "$ref" >/dev/null \
+  || { echo "no snapshot for task $n at $ref" >&2; exit 3; }
+
+files=$("$here/plan-tasks" "$plan" | awk -F'\t' -v n="$n" '$1==n{print $3}')
+if [ -z "$files" ] || [ "$files" = "none" ] || [ "$files" = "MISSING" ]; then
+  echo "task $n has no declared files in $plan" >&2
+  exit 3
+fi
+IFS=',' read -r -a paths <<< "$files"
+
+staged=$(git diff --cached --name-only -- "${paths[@]}")
+if [ -n "$staged" ]; then
+  echo "refusing: these paths have staged changes under review:" >&2
+  echo "$staged" >&2
+  exit 4
+fi
+
+git restore --source="$ref" --worktree -- "${paths[@]}"
+printf 'restored task %s from %s\n' "$n" "$ref"

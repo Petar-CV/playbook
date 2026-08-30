@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Snapshot one task's declared files to a git ref, giving parked (finished but
+# uncommitted) work a durable identity.
+#
+# GIT_INDEX_FILE gives us a private index, so this never touches .git/index --
+# parking is safe while another stage is staged for the human's review. The ref
+# lives outside refs/heads, so it is invisible to `git branch`, absent from
+# `git status`, not pushed by default, and anchored against gc.
+#
+# Usage: park-task PLAN_FILE N
+set -euo pipefail
+
+if [ $# -ne 2 ]; then
+  echo "usage: park-task PLAN_FILE N" >&2
+  exit 2
+fi
+
+plan=$1
+n=$2
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+
+here=$(cd "$(dirname "$0")" && pwd)
+ws=$("$here/sdd-workspace" "$plan")
+slug=$(basename "$plan" .md)
+ref="refs/superpowers/sdd/$slug/task-$n"
+
+files=$("$here/plan-tasks" "$plan" | awk -F'\t' -v n="$n" '$1==n{print $3}')
+if [ -z "$files" ] || [ "$files" = "none" ] || [ "$files" = "MISSING" ]; then
+  echo "task $n has no declared files in $plan" >&2
+  exit 3
+fi
+IFS=',' read -r -a paths <<< "$files"
+
+# Chain onto the previous snapshot so <ref>^ is always the state the last
+# review saw -- that is what makes a fix-round re-review scopeable.
+parent=$(git rev-parse --verify --quiet "$ref" || git rev-parse HEAD)
+
+idx="$ws/task-$n.index"
+rm -f "$idx"
+GIT_INDEX_FILE="$idx" git read-tree HEAD
+
+present=()
+for p in "${paths[@]}"; do
+  if [ -e "$p" ]; then
+    present+=("$p")
+  else
+    # A task may declare a file it deletes; record the deletion.
+    GIT_INDEX_FILE="$idx" git rm --cached --quiet --ignore-unmatch -- "$p"
+  fi
+done
+if [ ${#present[@]} -gt 0 ]; then
+  GIT_INDEX_FILE="$idx" git add -- "${present[@]}"
+fi
+
+tree=$(GIT_INDEX_FILE="$idx" git write-tree)
+snap=$(git commit-tree "$tree" -p "$parent" -m "park: task $n")
+git update-ref "$ref" "$snap"
+rm -f "$idx"
+
+printf '%s %s\n' "$ref" "$(git rev-parse --short "$snap")"
