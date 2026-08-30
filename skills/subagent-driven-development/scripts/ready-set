@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Compute the dispatchable task set from the plan's DAG and the ledger's state.
+#
+# Three edge types, deliberately different strengths:
+#   semantic  (Depends on:)      -> predecessor must be review-clean
+#   collision (shared file path) -> predecessor must be COMMITTED, because
+#                                   `git add <shared file>` would otherwise
+#                                   stage two tasks' work indistinguishably
+#   mutex     (kind:name)        -> predecessor must merely not be running
+#
+# Usage: ready-set PLAN_FILE
+set -euo pipefail
+
+if [ $# -ne 1 ]; then
+  echo "usage: ready-set PLAN_FILE" >&2
+  exit 2
+fi
+
+plan=$1
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+
+here=$(cd "$(dirname "$0")" && pwd)
+ws=$("$here/sdd-workspace" "$plan")
+ledger="$ws/progress.md"
+[ -f "$ledger" ] || : > "$ledger"
+
+graph="$ws/.graph.tsv"
+"$here/plan-tasks" "$plan" > "$graph"
+
+# awk's `exit` runs the END block, so a status set here would be overridden by
+# an END exit -- use a flag instead.
+if awk -F'\t' '$2=="MISSING"||$3=="MISSING"||$4=="MISSING"{bad=1} END{exit(bad?0:1)}' "$graph"; then
+  echo "plan is missing required task fields (Depends on:/Files:/Exclusive:)" >&2
+  awk -F'\t' '$2=="MISSING"||$3=="MISSING"||$4=="MISSING"{print "  Task "$1}' "$graph" >&2
+  echo "Rule: execute sequentially and record the ruling, or add the fields." >&2
+  exit 3
+fi
+
+awk -F'\t' -v ledger="$ledger" '
+  # A path-shaped Exclusive entry serializes on a commit; a kind:name entry is
+  # only a mutex. Deciding by syntax means it never depends on what exists on
+  # disk at pre-flight -- a lockfile a task regenerates may not exist yet.
+  function ispath(s) { return (s ~ /\//) || (s ~ /\.[A-Za-z0-9]+$/) }
+  function pathset(f, e,   x, i, k, r) {
+    r = (f == "none" ? "" : f)
+    if (e != "none") { k = split(e, x, ",")
+      for (i = 1; i <= k; i++) if (ispath(x[i])) r = (r == "" ? x[i] : r "," x[i]) }
+    return r
+  }
+  function mutexset(e,   x, i, k, r) {
+    r = ""
+    if (e != "none") { k = split(e, x, ",")
+      for (i = 1; i <= k; i++) if (!ispath(x[i])) r = (r == "" ? x[i] : r "," x[i]) }
+    return r
+  }
+  function shares(a, b,   x, y, i, j, na, nb) {
+    if (a == "" || b == "") return 0
+    na = split(a, x, ","); nb = split(b, y, ",")
+    for (i = 1; i <= na; i++) for (j = 1; j <= nb; j++) if (x[i] == y[j]) return 1
+    return 0
+  }
+  function add(s, v) { return (s == "" ? v : s " " v) }
+
+  BEGIN {
+    while ((getline l < ledger) > 0) {
+      if (l !~ /^Task[ ]+[0-9]+:/) continue
+      t = l; sub(/^Task[ ]+/, "", t); sub(/:.*$/, "", t)
+      if (l ~ /: committed/)    committed[t] = 1
+      if (l ~ /: review clean/) clean[t]     = 1
+      if (l ~ /: dispatched/)   dispatched[t]= 1
+      if (l ~ /: returned/)     returned[t]  = 1
+    }
+    close(ledger)
+  }
+
+  { n = $1; order[++c] = n; deps[n] = $2; paths[n] = pathset($3, $4); mutex[n] = mutexset($4) }
+
+  END {
+    baton = "none"
+    for (i = 1; i <= c; i++) if (!committed[order[i]]) { baton = order[i]; break }
+
+    ready = ""; blocked = ""; running = ""; parked = ""; done_ = ""
+    for (i = 1; i <= c; i++) {
+      n = order[i]
+      if (committed[n])                     { done_ = add(done_, n); continue }
+      if (dispatched[n] && !returned[n])    { running = add(running, n); continue }
+      if (clean[n])                         { parked = add(parked, n); continue }
+      if (returned[n])                      { continue }   # awaiting review
+
+      reason = ""
+      if (deps[n] != "none") {
+        m = split(deps[n], d, ",")
+        for (j = 1; j <= m; j++)
+          if (!clean[d[j]] && !committed[d[j]])
+            reason = reason (reason ? ", " : "") "dep " d[j]
+      }
+      for (k = 1; k < i; k++) {
+        p = order[k]
+        if (committed[p]) continue
+        if (shares(paths[n], paths[p]))
+          reason = reason (reason ? ", " : "") "collision " p
+      }
+      for (k = 1; k <= c; k++) {
+        p = order[k]
+        if (p == n || !(dispatched[p] && !returned[p])) continue
+        if (shares(mutex[n], mutex[p]))
+          reason = reason (reason ? ", " : "") "mutex " p
+      }
+
+      if (reason == "") ready = add(ready, n)
+      else blocked = blocked (blocked ? " | " : "") n " (" reason ")"
+    }
+
+    printf "BATON: %s\n",     baton
+    printf "READY: %s\n",     (ready   == "" ? "none" : ready)
+    printf "BLOCKED: %s\n",   (blocked == "" ? "none" : blocked)
+    printf "RUNNING: %s\n",   (running == "" ? "none" : running)
+    printf "PARKED: %s\n",    (parked  == "" ? "none" : parked)
+    printf "COMMITTED: %s\n", (done_   == "" ? "none" : done_)
+  }
+' "$graph"
