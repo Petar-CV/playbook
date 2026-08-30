@@ -127,6 +127,13 @@ Subagent (general-purpose):
     - DRY without premature abstraction?
     - Edge cases handled?
 
+    **Comments:**
+    - Does every added comment state something the code cannot state itself?
+      Flag any that restate the line they sit above.
+    - Does any comment describe how the code worked before this change
+      ("previously", "changed from", "used to", "this replaces")? That is
+      always a finding — history belongs in the commit message.
+
     **Tests:**
     - Do the new and changed tests verify real behavior, not mocks?
     - Are the task's edge cases covered?

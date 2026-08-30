@@ -49,6 +49,16 @@ These thoughts mean STOP—you're rationalizing:
 | "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
 | "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
 
+## Comment Discipline
+
+Default to no comment. The code states what it does; a comment earns its place only by stating something the code cannot.
+
+Write a comment ONLY when it carries information not recoverable by reading the code: a non-obvious constraint, a violated expectation, a workaround for a bug or API quirk, a deliberate deviation from the obvious approach, or a consequence that lives in another file. If a competent reader of this function would not be surprised, there is nothing to write.
+
+NEVER write a comment about how the code worked before your change. No "previously X, now Y", no "changed from", no "used to", no "this replaces". The diff and the commit message carry history. A comment narrating your edit is stale the moment it lands and misleads every reader after it.
+
+When you edit a line carrying a redundant comment, delete that comment as part of the change. Do not sweep for comments outside the lines you are already touching.
+
 ## Platform Adaptation
 
 If your harness appears here, read its reference file for special instructions:

@@ -104,6 +104,35 @@ Subagent (general-purpose):
     - In existing codebases, follow established patterns. Improve code you're touching
       the way a good developer would, but don't restructure things outside your task.
 
+    ## Comments
+
+    Default to no comment. The code states what it does; a comment earns its
+    place only by stating something the code cannot.
+
+    Write a comment ONLY when it carries information not recoverable by reading
+    the code: a non-obvious constraint, a violated expectation, a workaround for
+    a bug or API quirk, a deliberate deviation from the obvious approach, or a
+    consequence that lives in another file. If a competent reader of this
+    function would not be surprised, there is nothing to write.
+
+    NEVER write a comment about how the code worked before your change. No
+    "previously X, now Y", no "changed from", no "used to", no "this replaces".
+    The diff and the commit message carry history. A comment narrating your edit
+    is stale the moment it lands and misleads every reader after it.
+
+    When you edit a line carrying a redundant comment, delete that comment as
+    part of the change. Do not sweep for comments outside the lines you are
+    already touching — that pollutes your diff with work you do not own.
+
+    | Thought | Reality |
+    |---------|---------|
+    | "A comment here would be helpful" | If it restates the line, it is noise the next reader must skip. |
+    | "This explains what the function does" | The name does that. Fix the name instead. |
+    | "I'll note what this replaced so the reviewer follows" | That is the commit message's job. Reviewers read diffs. |
+    | "Section headers make the file scannable" | `// --- helpers ---` marks structure already visible. Delete it. |
+    | "It's only one line" | Every redundant comment teaches the next agent that this file wants comments. |
+    | "This code is complex, so it needs comments" | Complex code needs decomposition. Comment only what stays surprising afterward. |
+
     ## When You're in Over Your Head
 
     It is always OK to stop and say "this is too hard for me." Bad work is worse than
@@ -134,6 +163,7 @@ Subagent (general-purpose):
     - Is this my best work?
     - Are names clear and accurate (match what things do, not how they work)?
     - Is the code clean and maintainable?
+    - Did I leave a comment that restates the code, or narrates what the code used to do?
 
     **Discipline:**
     - Did I avoid overbuilding (YAGNI)?

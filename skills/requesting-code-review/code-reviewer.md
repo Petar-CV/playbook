@@ -57,6 +57,13 @@ Subagent (general-purpose):
     - DRY without premature abstraction?
     - Edge cases handled?
 
+    **Comments:**
+    - Does every added comment state something the code cannot state itself?
+      Flag any that restate the line they sit above.
+    - Does any comment describe how the code worked before this change
+      ("previously", "changed from", "used to", "this replaces")? That is
+      always a finding — history belongs in the commit message.
+
     **Architecture:**
     - Sound design decisions?
     - Reasonable scalability and performance?
