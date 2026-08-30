@@ -28,7 +28,15 @@ For each task:
 1. Mark as in_progress
 2. Follow each step exactly (plan has bite-sized steps)
 3. Run verifications as specified
-4. Mark as completed
+4. Stage the task's declared files (`git add -- <the task's Files list>`) and
+   stop. Present the file list, a one-or-two-line proposed commit message, and
+   the test results. Your human partner reviews `git diff --staged` and commits.
+   **Never run `git commit` yourself.**
+5. Once they have committed, mark as completed and move to the next task
+
+This skill executes sequentially, so exactly one task is ever staged. If you
+have subagents available, superpowers:subagent-driven-development runs
+independent tasks concurrently behind the same gate.
 
 ### Step 3: Complete Development
 

@@ -13,7 +13,17 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 ## Step 1: Verify Tests
 
-Run the project's full test suite (`npm test` / `cargo test` / `pytest` / `go test ./...`).
+First, confirm nothing is uncommitted:
+
+```bash
+git status --porcelain
+```
+
+If anything is staged or modified, a stage is still awaiting your human
+partner's review. Stop and say which stage — finishing a branch with parked
+work would leave that work out of the history entirely.
+
+Then run the project's full test suite (`npm test` / `cargo test` / `pytest` / `go test ./...`).
 
 **If tests fail**, report the failures and stop — the menu comes after a green suite:
 
@@ -172,6 +182,14 @@ created this worktree — we own cleanup:
 ```bash
 git worktree remove "$WORKTREE_PATH"
 git worktree prune  # Self-healing: clean up any stale registrations
+```
+
+**Always:** delete any SDD snapshot refs. They are scratch state that anchors
+parked stages against gc, not history, and the history now holds the work:
+
+```bash
+git for-each-ref --format='%(refname)' refs/superpowers/sdd/ \
+  | xargs -r -n1 git update-ref -d
 ```
 
 **If removal is refused** (`contains modified or untracked files`): the

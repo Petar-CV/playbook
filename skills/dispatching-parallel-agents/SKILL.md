@@ -13,6 +13,20 @@ When you have multiple unrelated failures (different test files, different subsy
 
 **Core principle:** Dispatch one agent per independent problem domain. Let them work concurrently.
 
+**Executing a plan?** Use superpowers:subagent-driven-development instead. It
+derives the safe concurrency from the plan's declared file sets and dependency
+graph rather than from your judgement, and it holds the commit gate. This skill
+is for ad-hoc independent problems — unrelated test failures, separate
+subsystems — that no plan describes.
+
+**Whenever agents share a working tree,** every dispatch must carry two rules:
+agents run no index-touching git command (`add`, `commit`, `stash`, `checkout`,
+`restore`, `reset`, `clean`), using `git --no-optional-locks ...` for read-only
+git so they do not collide on `.git/index.lock`; and agents edit only the files
+in their own scope, reporting anything else as an observation rather than
+fixing it. Without the second rule, an agent that runs the full suite will see
+another agent's work-in-progress as breakage and "fix" it.
+
 ## When to Use
 
 ```dot
