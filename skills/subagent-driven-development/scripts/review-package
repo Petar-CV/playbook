@@ -4,20 +4,93 @@
 # call. Using the recorded per-task BASE (not HEAD~1) keeps multi-commit
 # tasks intact.
 #
-# Usage: review-package PLAN_FILE BASE HEAD [OUTFILE]
+# Usage: review-package PLAN_FILE BASE HEAD [OUTFILE]      (commit-range mode)
+#        review-package PLAN_FILE --task N [--since-park]  (working-tree mode)
 # Default OUTFILE: <repo-root>/.superpowers/sdd/<plan-basename>/review-<base7>..<head7>.diff
 # (named per range, so a re-review after fixes gets a distinct fresh file).
 set -euo pipefail
 
-if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+usage() {
   echo "usage: review-package PLAN_FILE BASE HEAD [OUTFILE]" >&2
+  echo "       review-package PLAN_FILE --task N [--since-park]" >&2
   exit 2
+}
+
+[ $# -ge 2 ] || usage
+plan=$1
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+here=$(cd "$(dirname "$0")" && pwd)
+
+# Task-scoped working-tree mode. Nothing is committed until the human partner
+# commits it, so a task's diff comes from the working tree scoped to its
+# declared files. This is correct only because collision edges guarantee no
+# other uncommitted task shares those paths.
+if [ "$2" = "--task" ]; then
+  n=${3:-}
+  [ -n "$n" ] || usage
+  case "${4:-}" in ""|--since-park) ;; *) usage ;; esac
+
+  ws=$("$here/sdd-workspace" "$plan")
+  slug=$(basename "$plan" .md)
+  files=$("$here/plan-tasks" "$plan" | awk -F'\t' -v n="$n" '$1==n{print $3}')
+  if [ -z "$files" ] || [ "$files" = "none" ] || [ "$files" = "MISSING" ]; then
+    echo "task $n has no declared files in $plan" >&2
+    exit 3
+  fi
+  IFS=',' read -r -a paths <<< "$files"
+
+  # Tree-to-worktree by default. In --since-park mode both sides are snapshots
+  # and the diff is tree-to-tree, because `git diff <tree> -- <path>` resolves
+  # the right-hand side through the index: an UNTRACKED file captured in the
+  # snapshot would otherwise read as a deletion.
+  if [ "${4:-}" = "--since-park" ]; then
+    ref="refs/superpowers/sdd/$slug/task-$n"
+    git rev-parse --verify --quiet "$ref^" >/dev/null \
+      || { echo "no previous snapshot at ${ref}^ to scope the re-review against" >&2; exit 3; }
+    range=("$ref^" "$ref")
+    base_desc="${ref}^ (the state the previous review saw)"
+  else
+    range=("HEAD")
+    base_desc="HEAD (working tree)"
+  fi
+
+  out="$ws/review-task-$n-$(date +%s).diff"
+  {
+    echo "# Review package: task $n vs $base_desc"
+    echo
+    echo "## Scope"
+    echo "Scoped to task ${n}'s declared files. Other files in this working tree"
+    echo "may be mid-edit by concurrently running implementers; they are out of"
+    echo "scope and must not be reviewed or flagged."
+    printf '  %s\n' "${paths[@]}"
+    echo
+    echo "## Files changed"
+    git --no-optional-locks diff --stat "${range[@]}" -- "${paths[@]}"
+    echo
+    echo "## Diff"
+    git --no-optional-locks diff -U10 "${range[@]}" -- "${paths[@]}"
+    if [ ${#range[@]} -eq 1 ]; then
+      # Tree-to-worktree only: untracked files are invisible to `git diff`, so
+      # they need a synthetic new-file diff. The tree-to-tree range already
+      # carries additions.
+      echo
+      echo "## New files"
+      for p in "${paths[@]}"; do
+        if [ -e "$p" ] && ! git ls-files --error-unmatch -- "$p" >/dev/null 2>&1; then
+          # --no-index exits 1 when files differ, which is the normal case here.
+          git --no-optional-locks diff --no-index -U10 /dev/null "$p" || true
+        fi
+      done
+    fi
+  } > "$out"
+
+  echo "wrote ${out}: task ${n}, $(wc -c < "$out" | tr -d ' ') bytes"
+  exit 0
 fi
 
-plan=$1
+[ $# -ge 3 ] && [ $# -le 4 ] || usage
 base=$2
 head=$3
-[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
 
 git rev-parse --verify --quiet "$base" >/dev/null || { echo "bad BASE: $base" >&2; exit 2; }
 git rev-parse --verify --quiet "$head" >/dev/null || { echo "bad HEAD: $head" >&2; exit 2; }
