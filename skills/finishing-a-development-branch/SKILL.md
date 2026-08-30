@@ -16,12 +16,17 @@ description: Use when implementation is complete, all tests pass, and you need t
 First, confirm nothing is uncommitted:
 
 ```bash
-git status --porcelain
+git status --porcelain -- . ':(exclude)docs/superpowers/plans' \
+                            ':(exclude)docs/superpowers/specs'
 ```
 
 If anything is staged or modified, a stage is still awaiting your human
 partner's review. Stop and say which stage — finishing a branch with parked
 work would leave that work out of the history entirely.
+
+The plan and spec are excluded because they are never committed. They will
+still be sitting in the tree here, and that is the expected end state — do
+not read them as parked work and do not commit them to clear the check.
 
 Then run the project's full test suite (`npm test` / `cargo test` / `pytest` / `go test ./...`).
 
@@ -193,7 +198,7 @@ git for-each-ref --format='%(refname)' refs/superpowers/sdd/ \
 ```
 
 **If removal is refused** (`contains modified or untracked files`): the
-worktree holds files that exist nowhere else — uncommitted plans, notes,
+worktree holds files that exist nowhere else — the plan and spec, notes,
 or scratch work. Never `--force` on your own initiative. Show your human
 partner what is at stake and ask:
 
@@ -206,7 +211,7 @@ Worktree removal refused — these files were never committed:
 
 <file list>
 
-1. Commit them to <branch> before cleanup
+1. Commit them to <branch> before cleanup (never for the plan or spec)
 2. Move them into <main repo root>
 3. Delete them (unrecoverable)
 

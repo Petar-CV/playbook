@@ -317,6 +317,10 @@ and proceed.
 
 You stage. Your human partner commits. **You never run `git commit`.**
 
+The plan and the spec it came from are never staged and never committed. A
+stage carrying either is the wrong stage — restage without them before you
+present it.
+
 When a task's review comes back clean:
 
 1. **Ledger it immediately** — file list, proposed commit message, verdict,
@@ -631,7 +635,9 @@ with the complete findings list — not one fixer per finding.
 Per-finding fixers each rebuild context and re-run suites; a real
 session's final-review fix wave cost more than all its tasks combined.
 The fix wave is uncommitted work like any stage: stage it
-(`git add -A`), present it to your human partner as the final stage, and once
+(`git add -A -- . ":(exclude)$PLAN_FILE" ":(exclude)docs/superpowers/specs"` —
+a bare `git add -A` sweeps the plan and spec into your partner's commit),
+present it to your human partner as the final stage, and once
 they commit it run exactly one scoped re-review of that commit range
 (`scripts/review-package PLAN_FILE FIX_BASE HEAD`, where FIX_BASE is the
 commit before theirs — by this point every stage is committed, so the
@@ -680,6 +686,7 @@ Use superpowers:finishing-a-development-branch.
 | "Parking is bookkeeping — the files are right there in the tree"  | Dirty files have no identity. After a compaction, the ledger and the snapshot ref are the only things that know which files are whose.       |
 | "The fix was tiny, downstream is obviously fine"                  | Run `scripts/impact`. If it touches the `Produces` surface, downstream is affected whether it looks obvious or not.                          |
 | "An unrelated test broke, I'll have someone fix it"               | Another agent is mid-edit in this tree. Unrelated breakage is an observation for the ledger, not a fix dispatch.                             |
+| <<TODO-PARTNER: the rationalization for staging the plan>>        | <<TODO-PARTNER: the reality>>                                                                                                               |
 
 ## Example Workflow
 

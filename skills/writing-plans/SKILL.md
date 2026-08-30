@@ -17,6 +17,9 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
+- **Never commit the plan.** Like the spec it came from, it is scaffolding
+  for this task. It stays uncommitted for the whole run, including at the
+  end — an uncommitted plan is the expected final state, not loose ends.
 
 ## Scope Check
 
