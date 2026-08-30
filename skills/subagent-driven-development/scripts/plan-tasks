@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Parse an implementation plan into one TSV record per task, so every other SDD
+# script shares one parser instead of five copies that drift apart.
+#
+# Output: N <TAB> deps <TAB> files <TAB> exclusive <TAB> produces
+#   MISSING = the field never appeared; none = it appeared and was empty.
+#   Lists are comma-separated, no spaces. Records are in plan order.
+#
+# Usage: plan-tasks PLAN_FILE
+set -euo pipefail
+
+if [ $# -ne 1 ]; then
+  echo "usage: plan-tasks PLAN_FILE" >&2
+  exit 2
+fi
+
+plan=$1
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+
+awk '
+  function emit() {
+    if (n == "") return
+    printf "%s\t%s\t%s\t%s\t%s\n", n,
+      (seen_deps ? (deps == "" ? "none" : deps) : "MISSING"),
+      (files == "" ? "MISSING" : files),
+      (seen_excl ? (excl == "" ? "none" : excl) : "MISSING"),
+      (prod  == "" ? "none" : prod)
+    n=""; deps=""; files=""; excl=""; prod=""
+    sect=""; inprod=0; seen_deps=0; seen_excl=0
+  }
+  # Fenced code inside a task must never be parsed as structure.
+  /^```/ { infence = !infence; next }
+  infence { next }
+
+  /^#+[ \t]+Task[ \t]+[0-9]+/ {
+    emit()
+    match($0, /Task[ \t]+[0-9]+/)
+    t = substr($0, RSTART, RLENGTH); sub(/^Task[ \t]+/, "", t)
+    n = t
+    next
+  }
+  n == "" { next }
+
+  /^\*\*Depends on:\*\*/ {
+    seen_deps = 1
+    v = $0; sub(/^\*\*Depends on:\*\*[ \t]*/, "", v)
+    gsub(/[Tt]ask[ \t]*/, "", v); gsub(/[ \t]/, "", v)
+    if (v == "none") v = ""
+    deps = v; sect=""; inprod=0; next
+  }
+  /^\*\*Exclusive:\*\*/ {
+    seen_excl = 1
+    v = $0; sub(/^\*\*Exclusive:\*\*[ \t]*/, "", v)
+    gsub(/[ \t]/, "", v)
+    if (v == "none") v = ""
+    excl = v; sect=""; inprod=0; next
+  }
+  /^\*\*Files:\*\*/      { sect="files"; inprod=0; next }
+  /^\*\*Interfaces:\*\*/ { sect="iface"; inprod=0; next }
+  /^\*\*/                { sect=""; inprod=0; next }
+  # A step heading closes the metadata region: everything below it is prose and
+  # commands, and its backticked tokens are not interface symbols.
+  /^-[ \t]*\[[ xX]\]/    { sect=""; inprod=0; next }
+
+  sect == "files" {
+    line = $0
+    while (match(line, /`[^`]+`/)) {
+      p = substr(line, RSTART+1, RLENGTH-2)
+      sub(/:[0-9].*$/, "", p)          # strip a :123-145 line-range suffix
+      files = (files == "" ? p : files "," p)
+      line = substr(line, RSTART+RLENGTH)
+    }
+    next
+  }
+
+  sect == "iface" && /[Pp]roduces:/ { inprod=1; next }
+  sect == "iface" && /[Cc]onsumes:/ { inprod=0; next }
+  sect == "iface" && inprod {
+    line = $0
+    if (match(line, /`[^`]+`/)) {
+      s = substr(line, RSTART+1, RLENGTH-2)
+      if (match(s, /[A-Za-z_][A-Za-z0-9_]*/)) s = substr(s, RSTART, RLENGTH)
+      prod = (prod == "" ? s : prod "," s)
+    }
+    next
+  }
+
+  END { emit() }
+' "$plan"
