@@ -49,7 +49,7 @@ independently testable deliverable.
 - "Run it to make sure it fails" - step
 - "Implement the minimal code to make the test pass" - step
 - "Run the tests and make sure they pass" - step
-- "Commit" - step
+- "Report the files touched and a proposed commit message" - step
 
 ## Plan Document Header
 
@@ -84,16 +84,35 @@ include this section.]
 ````markdown
 ### Task N: [Component Name]
 
+**Depends on:** [comma-separated task numbers whose Produces this task
+Consumes, or the literal `none`. Mandatory — silence is a plan defect, not an
+implied `none`. Semantic dependency only; shared files are derived from the
+Files block.]
+
+**Exclusive:** [shared resources this task contends for that are not in its own
+edit set — regenerated lockfiles, migration sequence numbers, fixed ports,
+shared test databases, codegen outputs — or the literal `none`. Syntax decides
+the edge: an entry containing `/` or a file extension is a path and serializes
+on a commit; an entry of the form `<kind>:<name>` (e.g. `test-port:5432`) is a
+mutex and merely excludes concurrent runs.]
+
 **Files:**
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
 
+This list must be **exhaustive** — every file the task creates, modifies, or
+deletes. The executor schedules concurrency, derives per-task diffs, and stages
+your work for review from this list alone. A missing path is a silent lost
+write.
+
 **Interfaces:**
 - Consumes: [what this task uses from earlier tasks — exact signatures]
-- Produces: [what later tasks rely on — exact function names, parameter
-  and return types. A task's implementer sees only their own task; this
-  block is how they learn the names and types neighboring tasks use.]
+- Produces: [what later tasks rely on. A bullet list, each entry leading with
+  the symbol name in backticks, so the executor can match the surface
+  mechanically. Prose may follow the backticked symbol.]
+  - `functionName(arg: Type) -> Return`
+  - `ExportedClass`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -120,11 +139,16 @@ def function(input):
 Run: `pytest tests/path/test.py::test_name -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Report**
 
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature"
+List the files you touched and propose a commit message of one or two lines.
+Do not stage and do not commit — your human partner reviews each stage and
+commits it themselves.
+
+```text
+Files touched: tests/path/test.py, src/path/file.py
+Proposed commit message:
+  feat: add specific feature
 ```
 ````
 
@@ -147,6 +171,16 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 **2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
+
+**4. Dependency check:** Does every task carry both `Depends on:` and
+`Exclusive:`? Does every `Consumes` entry resolve to a `Produces` entry in a
+task named in that task's `Depends on:`? A consumed symbol with no declared
+dependency will be scheduled concurrently with the task that defines it.
+
+**5. Disjointness check:** List every pair of tasks that share a file. Those
+pairs serialize on your human partner's commits rather than running
+concurrently. Confirm each pair is intentional — if two tasks share a file
+only incidentally, splitting the file is usually better than serializing.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
