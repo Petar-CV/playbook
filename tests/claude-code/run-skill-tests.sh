@@ -58,6 +58,12 @@ while [[ $# -gt 0 ]]; do
             echo "  --help, -h           Show this help"
             echo ""
             echo "Tests:"
+            echo "  test-plan-tasks.sh  Plan graph parser"
+            echo "  test-ready-set.sh  Parallel dispatch scheduler"
+            echo "  test-park-restore.sh  Snapshot refs for parked stages"
+            echo "  test-stage-task.sh  One-stage-at-a-time staging"
+            echo "  test-impact.sh  Rejection fan-out from Produces"
+            echo "  test-review-package-task.sh  Task-scoped working-tree diffs"
             echo "  test-subagent-driven-development.sh  Test skill loading and requirements"
             echo ""
             echo "Integration Tests (use --integration):"
@@ -76,6 +82,12 @@ done
 tests=(
     "test-worktree-path-policy.sh"
     "test-sdd-workspace.sh"
+    "test-plan-tasks.sh"
+    "test-ready-set.sh"
+    "test-park-restore.sh"
+    "test-stage-task.sh"
+    "test-impact.sh"
+    "test-review-package-task.sh"
     "test-subagent-driven-development.sh"
 )
 

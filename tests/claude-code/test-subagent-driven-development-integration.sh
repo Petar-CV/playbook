@@ -5,8 +5,8 @@
 # Drill coverage: evals/scenarios/sdd-rejects-extra-features.yaml covers the
 # YAGNI enforcement subset (forbidden exports + reviewer-as-gate semantics)
 # and is stricter on that axis. This bash test additionally asserts:
-#   - >=3 git commits (initial + per-task commits, exercising SDD's
-#     commit-per-task workflow shape)
+#   - exactly 1 git commit (the initial one) — the controller stages but never
+#     commits, and an unattended run has no human partner to commit for it
 #   - >=2 Claude Code subagent dispatches via Agent or Task (drill only asserts >=1)
 #   - Claude Code task-tracking tool usage (drill makes no assertion)
 #   - test/math.test.js exists (drill relies on `npm test` succeeding)
@@ -275,13 +275,25 @@ else
 fi
 echo ""
 
-# Test 7: Git commits show proper workflow
-echo "Test 7: Git commit history..."
+# Test 7: The controller must NOT commit. Under the commit gate the human
+# partner is the only actor that commits, and an unattended test run has no
+# human — so a clean run leaves work staged or parked, never committed.
+echo "Test 7: Commit gate respected..."
 commit_count=$(git -C "$TEST_PROJECT" log --oneline | wc -l)
-if [ "$commit_count" -gt 2 ]; then  # Initial + at least 2 task commits
-    echo "  [PASS] Multiple commits created ($commit_count total)"
+if [ "$commit_count" -eq 1 ]; then
+    echo "  [PASS] Controller created no commits (only the initial commit)"
 else
-    echo "  [FAIL] Too few commits ($commit_count, expected >2)"
+    echo "  [FAIL] Controller created $((commit_count - 1)) commit(s); the gate forbids all of them"
+    git -C "$TEST_PROJECT" log --oneline
+    FAILED=$((FAILED + 1))
+fi
+
+ledger_file=$(find "$TEST_PROJECT/.superpowers/sdd" -name progress.md 2>/dev/null | head -1)
+if [ -n "$ledger_file" ] && grep -qE ': (parked|staged)' "$ledger_file"; then
+    echo "  [PASS] Ledger records parked or staged work"
+else
+    echo "  [FAIL] Ledger has no parked/staged line; the gate never ran"
+    [ -n "$ledger_file" ] && cat "$ledger_file"
     FAILED=$((FAILED + 1))
 fi
 echo ""
