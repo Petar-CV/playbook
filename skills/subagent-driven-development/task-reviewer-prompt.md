@@ -31,17 +31,24 @@ Subagent (general-purpose):
 
     ## Diff Under Review
 
-    **Base:** [BASE_SHA]
-    **Head:** [HEAD_SHA]
     **Diff file:** [DIFF_FILE]
+
+    The diff is scoped to this task's declared files, taken from the working
+    tree — nothing is committed until the human partner commits it. Other files
+    in this checkout may be mid-edit by implementers working concurrently on
+    other tasks. They are out of scope: do not read them, review them, or flag
+    them.
 
     Read the diff file once — it contains the commit list, a stat summary,
     and the full diff with surrounding context, and it is your view of the
     change. The diff's context lines ARE the changed files: do not Read a
     changed file separately unless a hunk you must judge is cut off
     mid-function — and say so in your report. Do not re-run git commands.
-    If the diff file is missing, fetch the diff yourself:
-    `git diff --stat [BASE_SHA]..[HEAD_SHA]` and `git diff [BASE_SHA]..[HEAD_SHA]`.
+    If the diff file is missing, say so and report NEEDS_CONTEXT. Do not
+    reconstruct it with git commands: this task's work is uncommitted and
+    interleaved in the working tree with other tasks' uncommitted work, so any
+    range you invent will show you other people's changes as if they were this
+    task's.
     Do not crawl the broader codebase. Inspect code outside the diff only
     to evaluate a concrete risk you can name — one focused check per named
     risk, and name both the risk and what you checked in your report.
@@ -168,6 +175,21 @@ Subagent (general-purpose):
       diff alone, and what the controller should check — report alongside the
       ✅/❌ verdict for everything you could verify]
 
+    ### Produces Verification
+
+    The task brief declares an `Interfaces: Produces` list — the exact symbols
+    later tasks are permitted to rely on. Check each declared symbol against
+    the diff and report exactly one of:
+
+    - `Produces verified: ✅`
+    - `Produces verified: ⚠️ diverged — declared X, actual Y`
+
+    Report ⚠️ whenever an implemented symbol's name, parameters, or return type
+    differs from the declaration, or a declared symbol is absent. Tasks that
+    depend on this one are dispatched against the DECLARED surface, so a silent
+    divergence means downstream work is being built on something that does not
+    exist.
+
     ### Strengths
     [What's well done? Be specific.]
 
@@ -197,11 +219,9 @@ Subagent (general-purpose):
   are already in this template)
 - `[REPORT_FILE]` — REQUIRED: the file the implementer wrote its detailed
   report to
-- `[BASE_SHA]` — commit before this task
-- `[HEAD_SHA]` — current commit
 - `[DIFF_FILE]` — REQUIRED: the path the controller wrote the review
-  package to (`scripts/review-package PLAN_FILE BASE HEAD` prints the unique
+  package to (`scripts/review-package PLAN_FILE --task N` prints the unique
   path it wrote; the package never enters the controller's context)
 
-**Reviewer returns:** Spec Compliance verdict (✅/❌/⚠️), Strengths, Issues
-(Critical/Important/Minor), Task quality verdict
+**Reviewer returns:** Spec Compliance verdict (✅/❌/⚠️), Produces verification
+(✅/⚠️), Strengths, Issues (Critical/Important/Minor), Task quality verdict

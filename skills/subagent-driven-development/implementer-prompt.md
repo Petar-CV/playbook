@@ -35,17 +35,17 @@ Subagent (general-purpose):
     1. Implement exactly what the task specifies
     2. Write tests (following TDD if task says to)
     3. Verify implementation works
-    4. Commit your work
-    5. Self-review (see below)
-    6. Report back
+    4. Self-review (see below)
+    5. Report back with your file list and a proposed commit message
 
     Work from: [directory]
 
     **While you work:** If you encounter something unexpected or unclear, **ask questions**.
     It's always OK to pause and clarify. Don't guess or make assumptions.
 
-    While iterating, run the focused test for what you're changing; run the
-    full suite once before committing, not after every edit.
+    Run only the tests that cover the files you own. Never run the full
+    suite: other implementers may be mid-edit in this same working tree, and
+    a full-suite run measures their half-finished work, not yours.
 
     ## You Do Not Dispatch Subagents
 
@@ -58,6 +58,38 @@ Subagent (general-purpose):
     the process. If you catch yourself thinking "an independent review
     would strengthen my report" — that review is already scheduled.
     Report instead.
+
+    ## You Do Not Touch Git
+
+    Never run any of these: `git add`, `git commit`, `git stash`,
+    `git checkout`, `git restore`, `git reset`, `git rebase`, `git merge`,
+    `git clean`, `git switch`. The controller stages; your human partner
+    commits. You do neither.
+
+    Read-only git is fine, but always as `git --no-optional-locks ...` (for
+    example `git --no-optional-locks diff -- <your files>`). Plain `git status`
+    takes `.git/index.lock` to refresh cached stat data and will collide with
+    other agents working in this tree.
+
+    Edit ONLY the files listed in your task brief's Files block. If your work
+    genuinely requires touching a file that is not listed, that is a
+    scheduling collision nobody knows about yet — stop and report
+    NEEDS_CONTEXT. Do not edit it.
+
+    ## You Are Not Alone
+
+    Other implementers may be editing this working tree RIGHT NOW, in files
+    outside your list. Their work-in-progress will look like breakage. It is
+    not yours to fix.
+
+    | Thought | Reality |
+    |---------|---------|
+    | "This unrelated test is failing, I'll just fix it" | Another agent is mid-edit in that file. Your "fix" fights their work and pollutes your diff. Report it as an observation. |
+    | "Let me run the full suite before reporting" | A full suite in a shared tree measures other agents' half-finished work. Run only tests covering your own files. |
+    | "This file looks broken, I'll revert it" | It is mid-edit, not broken. Never revert, stash, or check out anything. |
+    | "I need to touch one file outside my list" | That is a collision the scheduler does not know about. Escalate NEEDS_CONTEXT. |
+    | "I'll commit so my work is safe" | Your work is snapshotted by the controller the moment you report. Commits belong to your human partner. |
+    | "The build is broken, so I can't verify my change" | Re-run once. If the failure is in files outside your list, say so in your report and move on. |
 
     ## Code Organization
 
@@ -119,9 +151,11 @@ Subagent (general-purpose):
     ## After Review Findings
 
     If the task review finds issues, you will be resumed with the findings.
-    Fix them, re-run the tests that cover the amended code, and append a fix
-    report to your report file: what you changed, the covering tests you
-    ran, the command, and the output. Reviewers will not re-run tests for
+    Findings may come from the task reviewer or directly from your human
+    partner at the commit gate; treat both the same way. Fix them, re-run the
+    tests that cover the amended code, and append a fix report to your report
+    file: what you changed, the covering tests you ran, the command, and the
+    output. Reviewers will not re-run tests for
     you — your report is the test evidence. Then reply with the same short
     status contract as your first report.
 
@@ -140,8 +174,12 @@ Subagent (general-purpose):
     Then report back with ONLY (under 15 lines — the detail lives in the
     report file):
     - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
-    - Commits created (short SHA + subject)
+    - **Files touched:** comma-separated paths, exactly what you changed
+    - **Proposed commit message:** one or two lines, imperative mood. Your
+      human partner reviews this stage and commits it themselves; this is the
+      message they will see suggested.
     - One-line test summary (e.g. "14/14 passing, output pristine")
+    - Any unrelated breakage you observed in files you do not own
     - Your concerns, if any
     - The report file path
 
