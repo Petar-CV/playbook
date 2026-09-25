@@ -20,7 +20,7 @@ n=$2
 [ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
 
 here=$(cd "$(dirname "$0")" && pwd)
-slug=$(basename "$plan" .md)
+slug=$(basename "$("$here/sdd-workspace" "$plan")")
 ref="refs/superpowers/sdd/$slug/task-$n"
 
 git rev-parse --verify --quiet "$ref" >/dev/null \

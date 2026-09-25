@@ -182,6 +182,21 @@ Confirm:
 
 **Other tests fail?** Fix now.
 
+**"Other tests" means the project's suite, not just your file.** A
+green run of the test you wrote is not a green suite. Before you call
+the change done, run the project's test command (bare `pytest`,
+`npm test`, `cargo test` — whatever the repo uses) even when your task
+named only one test file. Any failure that run shows — including one
+you didn't cause — goes in your report by name; a red test you watched
+scroll past and didn't mention is a report falsified by omission.
+
+When you are executing one task of a plan, the change is the whole plan:
+the task's own tests are the per-task gate, and the project's suite
+runs once, right before the final whole-branch review. Under
+superpowers:subagent-driven-development other implementers are mid-edit
+in the same working tree, so a full run from inside one task measures
+their half-finished work, not yours.
+
 ### REFACTOR - Clean Up
 
 After green only:

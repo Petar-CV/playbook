@@ -40,26 +40,26 @@ stop and ask.
 digraph when_to_use {
     "Have implementation plan?" [shape=diamond];
     "Tasks mostly independent?" [shape=diamond];
-    "Stay in this session?" [shape=diamond];
+    "Partner chose Native, or no subagent tool?" [shape=diamond];
     "subagent-driven-development" [shape=box];
     "executing-plans" [shape=box];
     "Manual execution or brainstorm first" [shape=box];
 
     "Have implementation plan?" -> "Tasks mostly independent?" [label="yes"];
     "Have implementation plan?" -> "Manual execution or brainstorm first" [label="no"];
-    "Tasks mostly independent?" -> "Stay in this session?" [label="yes"];
+    "Tasks mostly independent?" -> "Partner chose Native, or no subagent tool?" [label="yes"];
     "Tasks mostly independent?" -> "Manual execution or brainstorm first" [label="no - tightly coupled"];
-    "Stay in this session?" -> "subagent-driven-development" [label="yes"];
-    "Stay in this session?" -> "executing-plans" [label="no - parallel session"];
+    "Partner chose Native, or no subagent tool?" -> "executing-plans" [label="yes"];
+    "Partner chose Native, or no subagent tool?" -> "subagent-driven-development" [label="no"];
 }
 ```
 
-**vs. Executing Plans (parallel session):**
+**vs. Executing Plans (Native):**
 
-- Same session (no context switch)
-- Fresh subagent per task (no context pollution)
-- Review after each task (spec compliance + code quality), broad review at the end
-- Independent tasks run concurrently; your partner reviews and commits one stage at a time
+- Fresh subagent per task (no context pollution) instead of one context doing every task
+- Review after each task (spec compliance + code quality) instead of only at the end
+- Independent tasks run concurrently; your partner reviews and commits one stage at a time, or once in the express lane — Native always commits once
+- Costs a fresh context per task and per review; Native costs one context plus one final reviewer
 
 ## The Process
 
@@ -97,6 +97,7 @@ digraph process {
     "Setup: worktree, ledger check, read plan, pre-flight review" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer (../requesting-code-review/code-reviewer.md)" [shape=box];
+    "Run the full suite once (<workspace>/final-suite.log)" [shape=box];
     "Final findings? ONE fix dispatch, one scoped re-review, adjudicate residuals" [shape=box];
     "Express lane: stage all (./scripts/stage-task --all), partner commits once" [shape=box];
     "Final review clean: delete this plan's workspace" [shape=box];
@@ -134,7 +135,8 @@ digraph process {
     "Partner commits or requests changes" -> "More tasks remain?" [label="commits"];
     "Wait: keep scheduling other tasks" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch READY set (./scripts/ready-set) in one message" [label="yes"];
-    "More tasks remain?" -> "Dispatch final code reviewer (../requesting-code-review/code-reviewer.md)" [label="no"];
+    "More tasks remain?" -> "Run the full suite once (<workspace>/final-suite.log)" [label="no"];
+    "Run the full suite once (<workspace>/final-suite.log)" -> "Dispatch final code reviewer (../requesting-code-review/code-reviewer.md)";
     "Dispatch final code reviewer (../requesting-code-review/code-reviewer.md)" -> "Final findings? ONE fix dispatch, one scoped re-review, adjudicate residuals";
     "Final findings? ONE fix dispatch, one scoped re-review, adjudicate residuals" -> "Express lane: stage all (./scripts/stage-task --all), partner commits once" [label="express lane"];
     "Express lane: stage all (./scripts/stage-task --all), partner commits once" -> "Final review clean: delete this plan's workspace";
@@ -157,8 +159,10 @@ a ledger file, not only in todos.
 
 - Each plan owns a workspace: at skill start, run this skill's
   `scripts/sdd-workspace PLAN_FILE` — it prints the plan's git-ignored
-  directory (`<repo-root>/.superpowers/sdd/<plan-basename>/`), home to
-  every artifact for THIS plan: ledger, briefs, reports, review packages.
+  directory (`<repo-root>/.superpowers/sdd/<workspace-name>/`, where
+  `<workspace-name>` is the plan's basename unless another plan already owns
+  that name), home to every artifact for THIS plan: ledger, briefs, reports,
+  review packages.
   Another plan's directory is never yours to read or write.
 - Check for this plan's ledger at `<workspace>/progress.md`. If its first
   line names your plan file, tasks with a `Task <N>: complete` line are DONE
@@ -204,7 +208,7 @@ a ledger file, not only in todos.
   `dispatched` and no `returned` were lost mid-flight; re-dispatch them.
 - `git clean -fdx` will destroy the workspace (it's git-ignored scratch) and
   every parked stage's working-tree content with it. Snapshot refs live in
-  `.git` and survive: `git for-each-ref refs/superpowers/sdd/<plan-basename>`
+  `.git` and survive: `git for-each-ref refs/superpowers/sdd/<workspace-name>/`
   enumerates what was parked, and `scripts/restore-task` brings each back.
 
 Read the plan once, note its context and Global Constraints, and create a
@@ -690,6 +694,13 @@ parked-with-ruling at the cap.
 
 ## Final Review
 
+Once every task is review-clean, run the project's full test suite once —
+the plan's first full run, since implementers in the shared tree run only
+their own tests. Redirect it to `<workspace>/final-suite.log` and read its
+tail. Every failing test, by name, is a finding for the fix dispatch
+below, including one no task caused, and the tail goes to the final
+reviewer so it knows what is red.
+
 The final whole-branch review gets a package too: run
 `scripts/review-package PLAN_FILE MERGE_BASE HEAD` (MERGE_BASE = the commit the
 branch started from, e.g. `git merge-base main HEAD`) — or, in the express lane,
@@ -702,6 +713,12 @@ superpowers:requesting-code-review's
 [code-reviewer.md](../requesting-code-review/code-reviewer.md). Point it at
 the ledger's deferred-minor and parked lines so it can triage which must be
 fixed before merge.
+
+Its "Declined to judge" list is yours to rule on: every line is a ruling
+you ledger — `Final: Ruling: <behavior the reviewer set aside> — <what a
+reasonable person using this software gets, and why that stands or is now
+a finding> — <cost if wrong>`. A line you turn into a finding joins the fix
+dispatch.
 
 If the final whole-branch review returns findings, dispatch ONE fix subagent
 with the complete findings list — not one fixer per finding.
@@ -734,7 +751,7 @@ made in secret.
 
 When the final whole-branch review is clean and its fixes are merged, delete
 this plan's workspace (`rm -rf <workspace>`) and its snapshot refs
-(`git for-each-ref --format='%(refname)' refs/superpowers/sdd/<plan-basename> |
+(`git for-each-ref --format='%(refname)' refs/superpowers/sdd/<workspace-name>/ |
 xargs -r -n1 git update-ref -d`) — the git history is the record now. Sibling
 directories and other plans' refs are not yours; leave them alone.
 
@@ -762,7 +779,7 @@ Use superpowers:finishing-a-development-branch.
 | "Parking is bookkeeping — the files are right there in the tree"  | Dirty files have no identity. After a compaction, the ledger and the snapshot ref are the only things that know which files are whose.       |
 | "The fix was tiny, downstream is obviously fine"                  | Run `scripts/impact`. If it touches the `Produces` surface, downstream is affected whether it looks obvious or not.                          |
 | "An unrelated test broke, I'll have someone fix it"               | Another agent is mid-edit in this tree. Unrelated breakage is an observation for the ledger, not a fix dispatch.                             |
-| <<TODO-PARTNER: the rationalization for staging the plan>>        | <<TODO-PARTNER: the reality>>                                                                                                               |
+| "The plan is part of the work, so it goes in the stage"           | The plan is scaffolding and is never committed. A stage that carries it hands your partner a commit they have to unpick.                     |
 
 ## Example Workflow
 

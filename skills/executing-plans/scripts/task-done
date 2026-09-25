@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Close one task of a Native plan run in a single call: run the task's test
+# command, keep its full output in the workspace, print the tail, and -- only
+# if it passes -- snapshot the task's declared files and append the completion
+# line to the ledger. A failing command records nothing.
+#
+# A Native run commits nothing, so the snapshot ref, not a commit range, is
+# what identifies a finished task's work after a compaction.
+#
+# Usage: task-done PLAN_FILE TASK_NUMBER -- TEST_COMMAND [ARGS...]
+# Exit: the test command's status; park-task's status if the snapshot fails.
+set -euo pipefail
+
+if [ $# -lt 4 ] || [ "$3" != "--" ]; then
+  echo "usage: task-done PLAN_FILE TASK_NUMBER -- TEST_COMMAND [ARGS...]" >&2
+  exit 2
+fi
+
+plan=$1
+n=$2
+shift 3
+sdd="$(cd "$(dirname "$0")/../../subagent-driven-development/scripts" && pwd)"
+
+dir=$("$sdd/sdd-workspace" "$plan")
+log="$dir/task-${n}-tests.log"
+ledger="$dir/progress.md"
+
+cmd=""
+for a in "$@"; do
+  case "$a" in
+    *[[:space:]\"\;\|\&]*) cmd="$cmd '$a'" ;;
+    *) cmd="$cmd $a" ;;
+  esac
+done
+cmd=${cmd# }
+
+rc=0
+"$@" > "$log" 2>&1 || rc=$?
+
+tail -n 5 "$log"
+if [ "$rc" -ne 0 ]; then
+  echo "task-done: test command exited $rc; Task $n NOT recorded (full output: $log)" >&2
+  exit "$rc"
+fi
+
+ref=$("$sdd/park-task" "$plan" "$n" | cut -d' ' -f1)
+files=$("$sdd/plan-tasks" "$plan" | awk -F'\t' -v n="$n" '$1==n{print $3}')
+last=$(awk 'NF{l=$0} END{print (l == "" ? "(no output)" : l)}' "$log")
+[ -f "$ledger" ] || printf '# SDD ledger — plan: %s\n' "$plan" > "$ledger"
+line="Task $n: complete files=$files ref=$ref tests: $cmd → $last"
+printf '%s\n' "$line" >> "$ledger"
+echo "ledger: $line"

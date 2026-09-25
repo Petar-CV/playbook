@@ -101,6 +101,41 @@ FIXPLAN
     git rev-parse --verify --quiet "$ref" >/dev/null \
         && pass "snapshot survives git clean -fdx" || fail "snapshot survives git clean -fdx"
 
+    # Two plans sharing a basename must not share a snapshot namespace, or one
+    # plan's park overwrites the other's and restore brings back the wrong work.
+    mkdir -p docs/alpha docs/beta
+    for d in alpha beta; do
+        cat > "docs/$d/plan.md" <<FIXPLAN
+### Task 1: Thing
+
+**Depends on:** none
+**Files:**
+- Modify: \`src/$d.txt\`
+**Exclusive:** none
+**Interfaces:**
+- Consumes: nothing
+- Produces:
+  - \`thing\`
+FIXPLAN
+        echo "$d original" > "src/$d.txt"
+    done
+    git add docs src/alpha.txt src/beta.txt && git commit -q -m "two plans"
+
+    echo "alpha work" > src/alpha.txt
+    echo "beta work" > src/beta.txt
+    local ref_alpha ref_beta
+    ref_alpha="$("$SDD_SCRIPTS/park-task" docs/alpha/plan.md 1 | cut -d' ' -f1)"
+    ref_beta="$("$SDD_SCRIPTS/park-task" docs/beta/plan.md 1 | cut -d' ' -f1)"
+    [[ "$ref_alpha" != "$ref_beta" ]] \
+        && pass "same-basename plans park to distinct refs" \
+        || fail "same-basename plans park to distinct refs ($ref_alpha)"
+
+    echo "clobbered" > src/alpha.txt
+    "$SDD_SCRIPTS/restore-task" docs/alpha/plan.md 1 > /dev/null
+    [[ "$(cat src/alpha.txt)" == "alpha work" ]] \
+        && pass "restore reads the plan's own snapshot" \
+        || fail "restore reads the plan's own snapshot (got: $(cat src/alpha.txt))"
+
     echo ""
     if [[ "$FAILURES" -eq 0 ]]; then echo "All park/restore tests passed"; else
         echo "$FAILURES failure(s)"; exit 1; fi

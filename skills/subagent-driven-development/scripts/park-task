@@ -21,7 +21,7 @@ n=$2
 
 here=$(cd "$(dirname "$0")" && pwd)
 ws=$("$here/sdd-workspace" "$plan")
-slug=$(basename "$plan" .md)
+slug=$(basename "$ws")
 ref="refs/superpowers/sdd/$slug/task-$n"
 
 files=$("$here/plan-tasks" "$plan" | awk -F'\t' -v n="$n" '$1==n{print $3}')
