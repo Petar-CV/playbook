@@ -183,7 +183,7 @@ a ledger file, not only in todos.
   Baton: 1
 
   Task 5: dispatched (agent=<id>, model=<m>)
-  Task 5: returned DONE files=web/settings.tsx msg="feat: add settings page"
+  Task 5: returned DONE files=web/settings.tsx msg="Add settings page"
   Task 5: parked ref=refs/superpowers/sdd/<slug>/task-5
   Task 5: review clean (Produces verified ✅)
   Task 5: waiting (baton at 2)
@@ -342,7 +342,7 @@ When a task's review comes back clean:
 
 ```text
 Stage 2 of 8 staged: API endpoints
-Proposed:  feat(api): add /users and /users/:id endpoints
+Proposed:  Add /users and /users/:id endpoints
            Adds request validation and 404 handling.
 
   1 ✔ committed 4f3a91c      5 ● parked   (settings page)
@@ -408,7 +408,7 @@ reads to your partner as a finished plan and gets committed as one.
 
 ```text
 Express lane complete: 5 tasks staged as one review.
-Proposed:  feat(api): add user CRUD endpoints with validation
+Proposed:  Add user CRUD endpoints with validation
 
 Task 1: Schema
   src/models/user.py   |  34 ++++
@@ -784,11 +784,11 @@ You: "User level (~/.config/superpowers/hooks/)"
 Implementer 5: [returns first]
   Status: DONE
   Files touched: web/settings.tsx, web/settings.test.tsx
-  Proposed commit message: feat(web): add settings page
+  Proposed commit message: Add settings page
   4/4 passing, output pristine
 
 [scripts/park-task PLAN 5]
-[Ledger: Task 5: returned DONE files=web/settings.tsx,web/settings.test.tsx msg="feat(web): add settings page"]
+[Ledger: Task 5: returned DONE files=web/settings.tsx,web/settings.test.tsx msg="Add settings page"]
 [Ledger: Task 5: parked ref=refs/superpowers/sdd/feature-plan/task-5]
 [Run review-package PLAN --task 5; dispatch task reviewer]
 Task reviewer: Spec ✅. Produces verified ✅. Task quality: Approved.
@@ -798,7 +798,7 @@ Task reviewer: Spec ✅. Produces verified ✅. Task quality: Approved.
 Implementer 1: [Later]
   Status: DONE
   Files touched: src/install-hook.js, test/install-hook.test.js
-  Proposed commit message: feat: add install-hook command
+  Proposed commit message: Add install-hook command
   5/5 passing, output pristine
 
 [park-task 1; review-package --task 1; task reviewer → Spec ✅, Produces ✅, Approved]
@@ -806,7 +806,7 @@ Implementer 1: [Later]
 [scripts/stage-task PLAN 1]
 
   Stage 1 of 8 staged: Hook installation script
-  Proposed:  feat: add install-hook command
+  Proposed:  Add install-hook command
 
     1 ▸ STAGED — your review    5 ● parked   (settings page)
     2 ○ blocked (dep: 1)        6 ◐ running  (profile page)

@@ -59,6 +59,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Tests:"
             echo "  test-comment-discipline.sh  Comment rule present on all surfaces"
+            echo "  test-commit-message-style.sh  Plain commit messages, no type(scope) prefix"
             echo "  test-plan-tasks.sh  Plan graph parser"
             echo "  test-ready-set.sh  Parallel dispatch scheduler"
             echo "  test-park-restore.sh  Snapshot refs for parked stages"
@@ -83,6 +84,7 @@ done
 tests=(
     "test-worktree-path-policy.sh"
     "test-comment-discipline.sh"
+    "test-commit-message-style.sh"
     "test-sdd-workspace.sh"
     "test-plan-tasks.sh"
     "test-ready-set.sh"

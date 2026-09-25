@@ -151,7 +151,7 @@ commits it themselves.
 ```text
 Files touched: tests/path/test.py, src/path/file.py
 Proposed commit message:
-  feat: add specific feature
+  Add specific feature
 ```
 ````
 

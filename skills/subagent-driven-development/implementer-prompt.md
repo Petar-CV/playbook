@@ -205,9 +205,13 @@ Subagent (general-purpose):
     report file):
     - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
     - **Files touched:** comma-separated paths, exactly what you changed
-    - **Proposed commit message:** one or two lines, imperative mood. Your
-      human partner reviews this stage and commits it themselves; this is the
-      message they will see suggested.
+    - **Proposed commit message:** Every commit message you write or propose
+      is a short plain subject in sentence case: `Add settings page`. NEVER
+      prefix it with a Conventional Commits `type(scope):` such as `feat:` or
+      `fix(api):`, even when the repository's `git log` uses them. Add a
+      second line only when the change needs one sentence of context the
+      subject cannot carry. Your human partner reviews this stage and commits
+      it themselves; this is the message they will see suggested.
     - One-line test summary (e.g. "14/14 passing, output pristine")
     - Any unrelated breakage you observed in files you do not own
     - Your concerns, if any

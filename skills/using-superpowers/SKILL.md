@@ -59,6 +59,10 @@ NEVER write a comment about how the code worked before your change. No "previous
 
 When you edit a line carrying a redundant comment, delete that comment as part of the change. Do not sweep for comments outside the lines you are already touching.
 
+## Commit Messages
+
+Every commit message you write or propose is a short plain subject in sentence case: `Add settings page`. NEVER prefix it with a Conventional Commits `type(scope):` such as `feat:` or `fix(api):`, even when the repository's `git log` uses them. Add a second line only when the change needs one sentence of context the subject cannot carry.
+
 ## Platform Adaptation
 
 If your harness appears here, read its reference file for special instructions:
